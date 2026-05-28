@@ -15,6 +15,22 @@ export const SHAPE_COLORS = {
 export type ShapeColorName = keyof typeof SHAPE_COLORS;
 export const SHAPE_PALETTE = Object.values(SHAPE_COLORS);
 
+// Sticky notes get their own soft palette so dark text is always legible —
+// the saturated shape colors (esp. black) make terrible notes.
+export const NOTE_COLORS = {
+  yellow: "#fef08a",
+  orange: "#fed7aa",
+  pink: "#fbcfe8",
+  green: "#bbf7d0",
+  blue: "#bfdbfe",
+  purple: "#e9d5ff",
+} as const;
+
+export type NoteColorName = keyof typeof NOTE_COLORS;
+
+// Readable ink color for text drawn on a note.
+export const NOTE_INK = "#1f2937";
+
 export const USER_PALETTE = [
   "#ef4444", // red
   "#f97316", // orange

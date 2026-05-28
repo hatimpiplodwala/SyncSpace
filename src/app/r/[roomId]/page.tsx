@@ -3,9 +3,10 @@ import { redirect } from "next/navigation";
 import { getAuthContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Room } from "@/types/db";
+import { Whiteboard } from "@/components/Whiteboard";
 
-// Phase 1 placeholder. The interactive canvas (CanvasLayer, Toolbar, presence,
-// realtime) is built in Phases 2–4 and will replace this stub.
+// Phase 2: single-user canvas (local Yjs + IndexedDB). Realtime sync and
+// presence layer over the same doc arrive in Phases 3–4.
 export default async function RoomPage({
   params,
 }: {
@@ -52,26 +53,15 @@ export default async function RoomPage({
 
   return (
     <main className="flex flex-1 flex-col">
-      <header className="flex items-center justify-between border-b border-gray-100 px-6 py-3">
+      <header className="z-30 flex items-center justify-between border-b border-gray-100 px-6 py-3">
         <div className="flex items-center gap-3">
           <Link href="/" className="text-sm text-gray-400 hover:text-gray-600">
             ← Boards
           </Link>
           <h1 className="font-semibold text-gray-900">{room.name}</h1>
         </div>
-        <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-500">
-          Phase 1 · canvas coming soon
-        </span>
       </header>
-      <div className="flex flex-1 items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <p className="text-sm text-gray-500">
-            The collaborative canvas for{" "}
-            <span className="font-medium text-gray-700">{room.name}</span> will
-            be built in Phase 2.
-          </p>
-        </div>
-      </div>
+      <Whiteboard roomId={room.id} />
     </main>
   );
 }
