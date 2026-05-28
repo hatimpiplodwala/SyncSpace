@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
+  // Hide the on-screen dev tools indicator (the "N" badge). Build/runtime
+  // errors are still surfaced.
+  devIndicators: false,
 };
 
 export default nextConfig;
