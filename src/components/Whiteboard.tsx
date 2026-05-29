@@ -49,13 +49,28 @@ export function Whiteboard({ roomId }: { roomId: string }) {
 
   // --- create the Yjs doc + persistence (browser only) ----------------------
   useEffect(() => {
-    const rd = createRoomDoc(roomId);
+    const rd = createRoomDoc(roomId, {
+      onStatus: (s) =>
+        setStatus(
+          s === "connected"
+            ? "live"
+            : s === "connecting"
+              ? "loading"
+              : navigator.onLine
+                ? "reconnecting"
+                : "offline",
+        ),
+    });
     const undo = createUndoManager(rd.doc);
     // Instantiating a browser-only external resource and handing it to React —
     // the one extra render (null -> doc) is intended here.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRoom({ doc: rd.doc, undo });
-    rd.whenReady.then(() => setStatus("local"));
+    // Local-only mode (no Supabase): the doc is "saved on this device" once the
+    // IndexedDB cache has loaded. With a provider, status is driven by onStatus.
+    rd.whenReady.then(() => {
+      if (!rd.provider) setStatus("local");
+    });
 
     const shapesMap = getShapesMap(rd.doc);
     const refresh = () => {
