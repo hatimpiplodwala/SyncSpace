@@ -8,6 +8,7 @@ import { render, resizeHandleScreenRect } from "@/lib/canvas/render";
 import { hitTest } from "@/lib/canvas/hit-test";
 import {
   type Viewport,
+  type Point,
   initialViewport,
   screenToWorld,
   worldToScreen,
@@ -39,6 +40,10 @@ type Props = {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onToolChange: (t: Tool) => void;
+  /** Report viewport changes so the presence overlay can re-project cursors. */
+  onViewportChange?: (vp: Viewport) => void;
+  /** Report the local cursor in world coords (null when it leaves the canvas). */
+  onCursorMove?: (world: Point | null) => void;
 };
 
 // Active interaction. Only one runs at a time (multi-touch becomes "pinch").
@@ -60,6 +65,8 @@ export function CanvasLayer({
   selectedId,
   onSelect,
   onToolChange,
+  onViewportChange,
+  onCursorMove,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -74,6 +81,14 @@ export function CanvasLayer({
   const previewRef = useRef<Shape | null>(null);
   const spaceDownRef = useRef(false);
 
+  // Latest presence callbacks + last local cursor screen pos, read through refs
+  // so setViewportSynced stays stable (no churn in the wheel/pointer effects).
+  const presenceRef = useRef({ onViewportChange, onCursorMove });
+  useEffect(() => {
+    presenceRef.current = { onViewportChange, onCursorMove };
+  }, [onViewportChange, onCursorMove]);
+  const lastScreenRef = useRef<{ x: number; y: number } | null>(null);
+
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Keep the draw closure fresh so the rAF callback always sees latest props.
@@ -83,6 +98,14 @@ export function CanvasLayer({
   const setViewportSynced = useCallback((next: Viewport) => {
     viewportRef.current = next;
     setViewport(next);
+    presenceRef.current.onViewportChange?.(next);
+    // Re-project the (stationary) cursor so peers see it track the world point
+    // it's hovering as we pan/zoom.
+    const last = lastScreenRef.current;
+    if (last) {
+      const w = screenToWorld(next, last.x, last.y);
+      presenceRef.current.onCursorMove?.(w);
+    }
   }, []);
 
   // --- drawing --------------------------------------------------------------
@@ -146,6 +169,11 @@ export function CanvasLayer({
       window.removeEventListener("resize", resize);
     };
   }, [scheduleDraw]);
+
+  // Report the initial viewport once so the presence overlay starts aligned.
+  useEffect(() => {
+    presenceRef.current.onViewportChange?.(viewportRef.current);
+  }, []);
 
   // --- subscribe to doc changes --------------------------------------------
   useEffect(() => {
@@ -311,6 +339,11 @@ export function CanvasLayer({
     const vp = viewportRef.current;
     const world = screenToWorld(vp, sx, sy);
 
+    // Broadcast the local cursor (world coords) for presence, regardless of
+    // whatever gesture is in flight.
+    lastScreenRef.current = { x: sx, y: sy };
+    presenceRef.current.onCursorMove?.(world);
+
     switch (g.kind) {
       case "pan":
         setViewportSynced(pan(vp, sx - g.lastX, sy - g.lastY));
@@ -411,6 +444,11 @@ export function CanvasLayer({
     scheduleDraw();
   };
 
+  const onPointerLeave = () => {
+    lastScreenRef.current = null;
+    presenceRef.current.onCursorMove?.(null);
+  };
+
   const onDoubleClick = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -468,6 +506,7 @@ export function CanvasLayer({
         onPointerMove={onPointerMove}
         onPointerUp={endPointer}
         onPointerCancel={endPointer}
+        onPointerLeave={onPointerLeave}
         onDoubleClick={onDoubleClick}
       />
       {editor}

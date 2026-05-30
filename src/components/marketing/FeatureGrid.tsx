@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/card";
+
 const features = [
   {
     title: "Live presence",
@@ -19,27 +21,27 @@ const features = [
 
 export function FeatureGrid() {
   return (
-    <section className="border-t border-gray-100 bg-gray-50/60">
+    <section className="border-t border-border bg-secondary/40">
       <div className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900">
+        <h2 className="text-center text-2xl font-bold tracking-tight text-foreground">
           How it works
         </h2>
-        <p className="mx-auto mt-2 max-w-xl text-center text-gray-600">
+        <p className="mx-auto mt-2 max-w-xl text-center text-muted-foreground">
           A focused toolset built on distributed-systems fundamentals.
         </p>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f) => (
-            <div
+            <Card
               key={f.title}
-              className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+              className="gap-2 p-6 transition-shadow hover:shadow-[var(--shadow-glossy)]"
             >
-              <h3 className="text-base font-semibold text-gray-900">
+              <h3 className="text-base font-semibold text-foreground">
                 {f.title}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-gray-600">
+              <p className="text-sm leading-relaxed text-muted-foreground">
                 {f.body}
               </p>
-            </div>
+            </Card>
           ))}
         </div>
       </div>

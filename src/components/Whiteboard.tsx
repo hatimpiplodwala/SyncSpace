@@ -9,7 +9,13 @@ import {
   type NoteColorName,
 } from "@/lib/colors";
 import { type Tool } from "@/lib/canvas/tools";
+import {
+  type Viewport,
+  type Point,
+  initialViewport,
+} from "@/lib/canvas/viewport";
 import { createRoomDoc, getShapesMap } from "@/lib/yjs/doc";
+import { usePresence, type Me } from "@/lib/presence/usePresence";
 import { createUndoManager } from "@/lib/yjs/undo";
 import {
   deleteShape,
@@ -19,13 +25,14 @@ import {
   getShapeType,
 } from "@/lib/yjs/shapes";
 import { CanvasLayer } from "./CanvasLayer";
+import { PresenceLayer } from "./PresenceLayer";
 import { Toolbar } from "./Toolbar";
 import { ConnectionBadge, type ConnectionStatus } from "./ConnectionBadge";
 import { ShortcutsCheatSheet } from "./ShortcutsCheatSheet";
 
 type RoomState = { doc: Y.Doc; undo: Y.UndoManager };
 
-export function Whiteboard({ roomId }: { roomId: string }) {
+export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
   const [room, setRoom] = useState<RoomState | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>("loading");
 
@@ -40,6 +47,20 @@ export function Whiteboard({ roomId }: { roomId: string }) {
 
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+
+  // Presence (multi-user cursors) over its own channel. Cursors render in world
+  // coords; the overlay re-projects through this viewport ref each frame.
+  const { peers, buffer, sendCursor } = usePresence(roomId, me);
+  const viewportRef = useRef<Viewport>(initialViewport());
+  const handleViewportChange = useCallback((vp: Viewport) => {
+    viewportRef.current = vp;
+  }, []);
+  const handleCursorMove = useCallback(
+    (w: Point | null) => {
+      if (w) sendCursor(w.x, w.y);
+    },
+    [sendCursor],
+  );
 
   // Latest state for the window-level keyboard handler (avoids stale closures).
   const stateRef = useRef({ room, selectedId, showShortcuts });
@@ -196,7 +217,13 @@ export function Whiteboard({ roomId }: { roomId: string }) {
           selectedId={selectedId}
           onSelect={setSelectedId}
           onToolChange={setTool}
+          onViewportChange={handleViewportChange}
+          onCursorMove={handleCursorMove}
         />
+      )}
+
+      {room && (
+        <PresenceLayer peers={peers} buffer={buffer} viewportRef={viewportRef} />
       )}
 
       <Toolbar
@@ -228,15 +255,15 @@ export function Whiteboard({ roomId }: { roomId: string }) {
 
       {isEmpty && !hintDismissed && status !== "loading" && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-          <div className="pointer-events-auto max-w-xs rounded-2xl border border-gray-200 bg-white/90 px-5 py-4 text-center shadow-lg backdrop-blur">
-            <p className="text-sm text-gray-600">
+          <div className="glass pointer-events-auto max-w-xs rounded-2xl px-5 py-4 text-center">
+            <p className="text-sm text-foreground/80">
               Pick a tool above and start drawing. Everything is saved to this
               device automatically.
             </p>
             <button
               type="button"
               onClick={() => setHintDismissed(true)}
-              className="mt-3 text-xs font-medium text-gray-400 hover:text-gray-600"
+              className="mt-3 text-xs font-medium text-muted-foreground transition hover:text-foreground"
             >
               Got it
             </button>
@@ -244,9 +271,10 @@ export function Whiteboard({ roomId }: { roomId: string }) {
         </div>
       )}
 
-      {showShortcuts && (
-        <ShortcutsCheatSheet onClose={() => setShowShortcuts(false)} />
-      )}
+      <ShortcutsCheatSheet
+        open={showShortcuts}
+        onOpenChange={setShowShortcuts}
+      />
     </div>
   );
 }

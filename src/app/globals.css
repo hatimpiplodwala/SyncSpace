@@ -1,21 +1,113 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-/* Light, neutral, Figma-ish theme — no dark mode in v1 (PRD §6). */
+/*
+  SyncSpace design system — light-only, true-blue identity (shadcn tokens).
+  Neutrals carry a faint cool-blue tint so the UI reads crisp, not flat gray.
+*/
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --radius: 0.75rem;
+
+  --background: oklch(0.991 0.004 255);
+  --foreground: oklch(0.21 0.02 260);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.02 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.02 260);
+
+  /* blue #2563eb */
+  --primary: oklch(0.546 0.215 263);
+  --primary-foreground: oklch(0.985 0.005 255);
+
+  --secondary: oklch(0.965 0.008 255);
+  --secondary-foreground: oklch(0.3 0.03 260);
+
+  --muted: oklch(0.965 0.008 255);
+  --muted-foreground: oklch(0.552 0.02 257);
+
+  --accent: oklch(0.95 0.03 255);
+  --accent-foreground: oklch(0.32 0.07 262);
+
+  --destructive: oklch(0.58 0.222 27);
+  --destructive-foreground: oklch(0.985 0.005 255);
+
+  --border: oklch(0.918 0.012 255);
+  --input: oklch(0.918 0.012 255);
+  --ring: oklch(0.62 0.19 261);
+
+  /* Gloss extras (not standard shadcn tokens). */
+  --primary-from: #3b82f6; /* blue-500 */
+  --primary-to: #2563eb; /* blue-600 */
+  --gradient-primary: linear-gradient(180deg, var(--primary-from), var(--primary-to));
+  --gradient-brand: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  --shadow-soft: 0 1px 2px oklch(0.21 0.02 260 / 0.06),
+    0 8px 24px -8px oklch(0.21 0.02 260 / 0.12);
+  --shadow-glossy: 0 1px 2px oklch(0.21 0.02 260 / 0.08),
+    0 12px 32px -10px oklch(0.5 0.2 260 / 0.22);
 }
 
 @theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-glossy: var(--shadow-glossy);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-html,
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+}
+
+@layer components {
+  /* Glossy primary surface: blue gradient with an inset top highlight. */
+  .gloss-primary {
+    background-image: var(--gradient-primary);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.25),
+      var(--shadow-glossy);
+  }
+  .gloss-primary:hover {
+    filter: brightness(1.05);
+  }
+
+  /* Frosted glass for floating chrome (toolbar, badges, dialogs, hints). */
+  .glass {
+    background-color: rgb(255 255 255 / 0.72);
+    backdrop-filter: blur(12px) saturate(1.4);
+    border: 1px solid rgb(255 255 255 / 0.6);
+    box-shadow: var(--shadow-glossy);
+  }
 }

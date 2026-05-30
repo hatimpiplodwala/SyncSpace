@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import { sendMagicLink, type FormState } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const initial: FormState = {};
 
@@ -12,7 +14,7 @@ export function AuthForm({ compact = false }: { compact?: boolean }) {
     return (
       <div
         role="status"
-        className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+        className="rounded-xl border border-primary/20 bg-accent px-4 py-3 text-sm text-accent-foreground"
       >
         Check your inbox — we sent you a magic link to sign in.
       </div>
@@ -28,30 +30,31 @@ export function AuthForm({ compact = false }: { compact?: boolean }) {
         <label htmlFor="email" className="sr-only">
           Email address
         </label>
-        <input
+        <Input
           id="email"
           name="email"
           type="email"
           required
           autoComplete="email"
           placeholder="you@example.com"
-          className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm outline-none transition focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10"
+          className="h-11 flex-1 sm:h-10"
         />
-        <button
+        <Button
           type="submit"
+          size="lg"
           disabled={isPending}
-          className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900/30 disabled:opacity-60"
+          className="h-11 sm:h-10"
         >
           {isPending ? "Sending…" : "Send magic link"}
-        </button>
+        </Button>
       </div>
       {state.error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-destructive">
           {state.error}
         </p>
       )}
       {!compact && (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           No password needed — we&apos;ll email you a one-tap sign-in link.
         </p>
       )}

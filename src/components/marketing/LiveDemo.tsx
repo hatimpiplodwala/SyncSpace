@@ -4,13 +4,13 @@
 
 export function LiveDemo() {
   return (
-    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl shadow-gray-900/5">
+    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-glossy)]">
       {/* dotted canvas backdrop */}
       <div
         className="absolute inset-0"
         style={{
           backgroundImage:
-            "radial-gradient(circle, rgb(0 0 0 / 0.06) 1px, transparent 1px)",
+            "radial-gradient(circle, color-mix(in oklab, var(--foreground) 7%, transparent) 1px, transparent 1px)",
           backgroundSize: "20px 20px",
         }}
       />
@@ -18,7 +18,7 @@ export function LiveDemo() {
       {/* shapes */}
       <div className="absolute left-[14%] top-[20%] h-20 w-28 rotate-[-4deg] rounded-md bg-yellow-200 shadow-sm" />
       <div className="absolute right-[16%] top-[30%] h-16 w-24 rounded-lg border-2 border-blue-500" />
-      <div className="absolute bottom-[18%] left-[28%] h-16 w-16 rounded-full border-2 border-purple-500" />
+      <div className="absolute bottom-[18%] left-[28%] h-16 w-16 rounded-full border-2 border-sky-500" />
 
       <svg
         className="absolute inset-0 h-full w-full"
@@ -36,8 +36,8 @@ export function LiveDemo() {
       </svg>
 
       {/* roving cursors */}
-      <Cursor className="animate-[demoA_7s_ease-in-out_infinite]" color="#3b82f6" name="Ada" />
-      <Cursor className="animate-[demoB_9s_ease-in-out_infinite]" color="#a855f7" name="Lin" />
+      <Cursor className="animate-[demoA_7s_ease-in-out_infinite]" color="#2563eb" name="Ada" />
+      <Cursor className="animate-[demoB_9s_ease-in-out_infinite]" color="#0ea5e9" name="Lin" />
 
       <style>{`
         @keyframes demoA {

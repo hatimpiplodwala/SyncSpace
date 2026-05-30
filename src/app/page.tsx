@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import { getAuthContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createRoom, signOut } from "@/app/actions";
+import { LogoWordmark } from "@/components/Logo";
+import { UserMenu } from "@/components/UserMenu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Hero } from "@/components/marketing/Hero";
 import { FeatureGrid } from "@/components/marketing/FeatureGrid";
 import { Footer } from "@/components/marketing/Footer";
@@ -32,44 +36,24 @@ export default async function HomePage() {
 
   return (
     <main className="flex-1">
-      <header className="border-b border-gray-100">
+      <header className="border-b border-border">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2 text-lg font-bold tracking-tight text-gray-900">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-gray-900 text-sm text-white">
-              S
-            </span>
-            SyncSpace
-          </div>
-          <div className="flex items-center gap-3">
-            <span
-              className="grid h-8 w-8 place-items-center rounded-full text-sm font-semibold text-white"
-              style={{ backgroundColor: profile.avatar_color }}
-              title={profile.display_name}
-            >
-              {profile.display_name.charAt(0).toUpperCase()}
-            </span>
-            <span className="hidden text-sm text-gray-600 sm:inline">
-              {profile.display_name}
-            </span>
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-50"
-              >
-                Sign out
-              </button>
-            </form>
-          </div>
+          <LogoWordmark />
+          <UserMenu
+            name={profile.display_name}
+            color={profile.avatar_color}
+            signOutAction={signOut}
+          />
         </div>
       </header>
 
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Your boards
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               Create a board, then share the link to collaborate live.
             </p>
           </div>
@@ -77,20 +61,17 @@ export default async function HomePage() {
             <label htmlFor="name" className="sr-only">
               Board name
             </label>
-            <input
+            <Input
               id="name"
               name="name"
               type="text"
               maxLength={60}
               placeholder="New board name"
-              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10"
+              className="h-10 w-56"
             />
-            <button
-              type="submit"
-              className="whitespace-nowrap rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-700"
-            >
-              + Create board
-            </button>
+            <Button type="submit" size="lg" className="whitespace-nowrap">
+              Create board
+            </Button>
           </form>
         </div>
 
@@ -105,20 +86,12 @@ export default async function HomePage() {
 function Landing() {
   return (
     <main className="flex-1">
-      <header className="border-b border-gray-100">
+      <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2 text-lg font-bold tracking-tight text-gray-900">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-gray-900 text-sm text-white">
-              S
-            </span>
-            SyncSpace
-          </div>
-          <Link
-            href="/login"
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
-          >
-            Sign in
-          </Link>
+          <LogoWordmark />
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/login">Sign in</Link>
+          </Button>
         </div>
       </header>
       <Hero />

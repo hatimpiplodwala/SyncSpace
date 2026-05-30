@@ -2,11 +2,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { ArrowLeft } from "lucide-react";
 import type { Room } from "@/types/db";
+import { userColor } from "@/lib/colors";
+import { Logo } from "@/components/Logo";
+import { Button } from "@/components/ui/button";
 import { Whiteboard } from "@/components/Whiteboard";
 
-// Phase 2: single-user canvas (local Yjs + IndexedDB). Realtime sync and
-// presence layer over the same doc arrive in Phases 3–4.
+// Realtime collaborative canvas: local Yjs + IndexedDB, synced over Supabase
+// (doc updates) with a separate presence channel for multi-user cursors.
 export default async function RoomPage({
   params,
 }: {
@@ -28,14 +32,16 @@ export default async function RoomPage({
   if (!room) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-        <h1 className="text-xl font-bold text-gray-900">No access to this board</h1>
-        <p className="max-w-sm text-sm text-gray-500">
+        <h1 className="text-xl font-bold text-foreground">
+          No access to this board
+        </h1>
+        <p className="max-w-sm text-sm text-muted-foreground">
           You&apos;re not a member of this board. (The invite-link &amp;
           request-access flow lands in Phase 6.)
         </p>
-        <Link href="/" className="text-sm font-medium text-gray-900 underline">
-          Back to your boards
-        </Link>
+        <Button asChild variant="outline" className="mt-2">
+          <Link href="/">Back to your boards</Link>
+        </Button>
       </main>
     );
   }
@@ -43,25 +49,40 @@ export default async function RoomPage({
   if (room.deleted_at) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-        <h1 className="text-xl font-bold text-gray-900">This board was deleted</h1>
-        <Link href="/" className="text-sm font-medium text-gray-900 underline">
-          Back to your boards
-        </Link>
+        <h1 className="text-xl font-bold text-foreground">
+          This board was deleted
+        </h1>
+        <Button asChild variant="outline" className="mt-2">
+          <Link href="/">Back to your boards</Link>
+        </Button>
       </main>
     );
   }
 
   return (
     <main className="flex flex-1 flex-col">
-      <header className="z-30 flex items-center justify-between border-b border-gray-100 px-6 py-3">
+      <header className="z-30 flex items-center justify-between border-b border-border px-6 py-3">
         <div className="flex items-center gap-3">
-          <Link href="/" className="text-sm text-gray-400 hover:text-gray-600">
-            ← Boards
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+            Boards
           </Link>
-          <h1 className="font-semibold text-gray-900">{room.name}</h1>
+          <span className="h-5 w-px bg-border" aria-hidden />
+          <Logo size={20} />
+          <h1 className="font-semibold text-foreground">{room.name}</h1>
         </div>
       </header>
-      <Whiteboard roomId={room.id} />
+      <Whiteboard
+        roomId={room.id}
+        me={{
+          id: user.id,
+          name: profile.display_name,
+          color: profile.avatar_color || userColor(user.id),
+        }}
+      />
     </main>
   );
 }

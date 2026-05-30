@@ -1,17 +1,37 @@
 "use client";
 
 import {
+  MousePointer2,
+  Pencil,
+  StickyNote,
+  Square,
+  Circle,
+  BringToFront,
+  SendToBack,
+  Trash2,
+  Undo2,
+  Redo2,
+  Keyboard,
+  type LucideIcon,
+} from "lucide-react";
+import {
   SHAPE_COLORS,
   NOTE_COLORS,
   type ShapeColorName,
   type NoteColorName,
 } from "@/lib/colors";
 import { TOOLS, STROKE_WIDTHS, type Tool } from "@/lib/canvas/tools";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 type Props = {
   tool: Tool;
   onToolChange: (t: Tool) => void;
-  // Which palette the swatches drive right now.
   colorMode: "shape" | "note";
   color: ShapeColorName;
   onColorChange: (c: ShapeColorName) => void;
@@ -28,6 +48,14 @@ type Props = {
   onUndo: () => void;
   onRedo: () => void;
   onShowShortcuts: () => void;
+};
+
+const TOOL_ICONS: Record<Tool, LucideIcon> = {
+  select: MousePointer2,
+  pen: Pencil,
+  note: StickyNote,
+  rect: Square,
+  ellipse: Circle,
 };
 
 const shapeColorNames = Object.keys(SHAPE_COLORS) as ShapeColorName[];
@@ -54,27 +82,21 @@ export function Toolbar({
   onShowShortcuts,
 }: Props) {
   return (
-    <div className="pointer-events-auto absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-gray-200 bg-white/95 p-1.5 shadow-lg shadow-gray-900/5 backdrop-blur">
+    <div className="glass pointer-events-auto absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-1 rounded-xl p-1.5">
       {/* Tools */}
       <div className="flex items-center gap-1">
         {TOOLS.map((t) => {
-          const active = tool === t.tool;
+          const Icon = TOOL_ICONS[t.tool];
           return (
-            <button
+            <ChromeButton
               key={t.tool}
-              type="button"
-              onClick={() => onToolChange(t.tool)}
-              aria-pressed={active}
+              label={`${t.label} (${t.shortcut})`}
+              active={tool === t.tool}
               aria-keyshortcuts={t.shortcut}
-              title={`${t.label} (${t.shortcut})`}
-              className={`flex h-9 w-9 items-center justify-center rounded-lg text-base transition ${
-                active
-                  ? "bg-gray-900 text-white"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
+              onClick={() => onToolChange(t.tool)}
             >
-              <span aria-hidden>{t.glyph}</span>
-            </button>
+              <Icon className="size-[18px]" />
+            </ChromeButton>
           );
         })}
       </div>
@@ -84,42 +106,26 @@ export function Toolbar({
       {/* Color swatches — shape palette or the soft note palette. */}
       <div className="flex items-center gap-1">
         {colorMode === "note"
-          ? noteColorNames.map((name) => {
-              const active = noteColor === name;
-              return (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => onNoteColorChange(name)}
-                  aria-pressed={active}
-                  title={`${name} note`}
-                  className={`h-6 w-6 rounded-md border transition ${
-                    active
-                      ? "border-gray-900 ring-2 ring-gray-900/20"
-                      : "border-black/10 hover:scale-110"
-                  }`}
-                  style={{ backgroundColor: NOTE_COLORS[name] }}
-                />
-              );
-            })
-          : shapeColorNames.map((name) => {
-              const active = color === name;
-              return (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => onColorChange(name)}
-                  aria-pressed={active}
-                  title={name}
-                  className={`h-6 w-6 rounded-full border transition ${
-                    active
-                      ? "border-gray-900 ring-2 ring-gray-900/20"
-                      : "border-gray-200 hover:scale-110"
-                  }`}
-                  style={{ backgroundColor: SHAPE_COLORS[name] }}
-                />
-              );
-            })}
+          ? noteColorNames.map((name) => (
+              <Swatch
+                key={name}
+                label={`${name} note`}
+                active={noteColor === name}
+                shape="square"
+                color={NOTE_COLORS[name]}
+                onClick={() => onNoteColorChange(name)}
+              />
+            ))
+          : shapeColorNames.map((name) => (
+              <Swatch
+                key={name}
+                label={name}
+                active={color === name}
+                shape="round"
+                color={SHAPE_COLORS[name]}
+                onClick={() => onColorChange(name)}
+              />
+            ))}
       </div>
 
       {/* Stroke width (pen only) */}
@@ -127,26 +133,19 @@ export function Toolbar({
         <>
           <Divider />
           <div className="flex items-center gap-1 px-1">
-            {STROKE_WIDTHS.map((w) => {
-              const active = strokeWidth === w;
-              return (
-                <button
-                  key={w}
-                  type="button"
-                  onClick={() => onStrokeWidthChange(w)}
-                  aria-pressed={active}
-                  title={`${w}px`}
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg transition ${
-                    active ? "bg-gray-100" : "hover:bg-gray-100"
-                  }`}
-                >
-                  <span
-                    className="rounded-full bg-gray-800"
-                    style={{ width: w, height: w }}
-                  />
-                </button>
-              );
-            })}
+            {STROKE_WIDTHS.map((w) => (
+              <ChromeButton
+                key={w}
+                label={`${w}px`}
+                active={strokeWidth === w}
+                onClick={() => onStrokeWidthChange(w)}
+              >
+                <span
+                  className="rounded-full bg-foreground"
+                  style={{ width: w, height: w }}
+                />
+              </ChromeButton>
+            ))}
           </div>
         </>
       )}
@@ -156,15 +155,15 @@ export function Toolbar({
         <>
           <Divider />
           <div className="flex items-center gap-1">
-            <IconButton title="Bring to front" onClick={onBringToFront}>
-              ⤒
-            </IconButton>
-            <IconButton title="Send to back" onClick={onSendToBack}>
-              ⤓
-            </IconButton>
-            <IconButton title="Delete (Del)" onClick={onDelete}>
-              🗑
-            </IconButton>
+            <ChromeButton label="Bring to front" onClick={onBringToFront}>
+              <BringToFront className="size-[18px]" />
+            </ChromeButton>
+            <ChromeButton label="Send to back" onClick={onSendToBack}>
+              <SendToBack className="size-[18px]" />
+            </ChromeButton>
+            <ChromeButton label="Delete (Del)" onClick={onDelete}>
+              <Trash2 className="size-[18px]" />
+            </ChromeButton>
           </div>
         </>
       )}
@@ -173,52 +172,104 @@ export function Toolbar({
 
       {/* Undo / redo / help */}
       <div className="flex items-center gap-1">
-        <IconButton
-          title="Undo (Ctrl/Cmd+Z)"
+        <ChromeButton
+          label="Undo (Ctrl/Cmd+Z)"
           onClick={onUndo}
           disabled={!canUndo}
         >
-          ↶
-        </IconButton>
-        <IconButton
-          title="Redo (Ctrl/Cmd+Shift+Z)"
+          <Undo2 className="size-[18px]" />
+        </ChromeButton>
+        <ChromeButton
+          label="Redo (Ctrl/Cmd+Shift+Z)"
           onClick={onRedo}
           disabled={!canRedo}
         >
-          ↷
-        </IconButton>
-        <IconButton title="Keyboard shortcuts (?)" onClick={onShowShortcuts}>
-          ?
-        </IconButton>
+          <Redo2 className="size-[18px]" />
+        </ChromeButton>
+        <ChromeButton label="Keyboard shortcuts (?)" onClick={onShowShortcuts}>
+          <Keyboard className="size-[18px]" />
+        </ChromeButton>
       </div>
     </div>
   );
 }
 
 function Divider() {
-  return <span className="mx-0.5 h-6 w-px bg-gray-200" aria-hidden />;
+  return <Separator orientation="vertical" className="mx-0.5 h-6" />;
 }
 
-function IconButton({
+function ChromeButton({
   children,
-  title,
+  label,
+  active,
   onClick,
   disabled,
+  ...rest
 }: {
   children: React.ReactNode;
-  title: string;
+  label: string;
+  active?: boolean;
   onClick: () => void;
   disabled?: boolean;
+} & Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "onClick" | "disabled" | "children"
+>) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          aria-pressed={active}
+          className={cn(
+            "flex size-9 items-center justify-center rounded-lg outline-none transition focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-30",
+            active
+              ? "gloss-primary text-primary-foreground"
+              : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground",
+          )}
+          {...rest}
+        >
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function Swatch({
+  label,
+  color,
+  active,
+  shape,
+  onClick,
+}: {
+  label: string;
+  color: string;
+  active: boolean;
+  shape: "round" | "square";
+  onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
-    >
-      <span aria-hidden>{children}</span>
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          aria-pressed={active}
+          className={cn(
+            "size-6 border transition hover:scale-110",
+            shape === "square" ? "rounded-md" : "rounded-full",
+            active
+              ? "border-ring ring-2 ring-ring/30"
+              : "border-black/10",
+          )}
+          style={{ backgroundColor: color }}
+        />
+      </TooltipTrigger>
+      <TooltipContent className="capitalize">{label}</TooltipContent>
+    </Tooltip>
   );
 }

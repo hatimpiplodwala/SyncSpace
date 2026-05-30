@@ -86,7 +86,7 @@ export function StickyNoteEditor({
         e.stopPropagation();
       }}
       placeholder="Type…"
-      className="pointer-events-auto absolute z-30 resize-none overflow-hidden rounded-[10px] text-gray-800 shadow-md outline-none ring-2 ring-blue-500 placeholder:text-gray-500/50"
+      className="pointer-events-auto absolute z-30 resize-none overflow-hidden rounded-[10px] text-gray-800 shadow-[var(--shadow-glossy)] outline-none ring-2 ring-ring placeholder:text-gray-500/50"
       style={{
         left: rect.x,
         top: rect.y,

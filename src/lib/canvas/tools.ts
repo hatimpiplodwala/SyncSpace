@@ -6,16 +6,15 @@ export type ToolMeta = {
   tool: Tool;
   label: string;
   shortcut: string; // single key, uppercase
-  // Minimal inline icon hint (rendered as text in the button for now).
-  glyph: string;
 };
 
+// Icons live in the Toolbar (lucide), keyed by `tool`.
 export const TOOLS: ToolMeta[] = [
-  { tool: "select", label: "Select", shortcut: "V", glyph: "↖" },
-  { tool: "pen", label: "Pen", shortcut: "P", glyph: "✎" },
-  { tool: "note", label: "Sticky note", shortcut: "N", glyph: "▭" },
-  { tool: "rect", label: "Rectangle", shortcut: "R", glyph: "□" },
-  { tool: "ellipse", label: "Ellipse", shortcut: "O", glyph: "○" },
+  { tool: "select", label: "Select", shortcut: "V" },
+  { tool: "pen", label: "Pen", shortcut: "P" },
+  { tool: "note", label: "Sticky note", shortcut: "N" },
+  { tool: "rect", label: "Rectangle", shortcut: "R" },
+  { tool: "ellipse", label: "Ellipse", shortcut: "O" },
 ];
 
 export const STROKE_WIDTHS = [2, 4, 8, 14] as const;
