@@ -110,4 +110,14 @@
     border: 1px solid rgb(255 255 255 / 0.6);
     box-shadow: var(--shadow-glossy);
   }
+
+  /* Hide the scrollbar but keep scrollability (used by the toolbar, which
+     scrolls horizontally on narrow/mobile screens where it can't fit one row). */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }

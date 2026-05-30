@@ -92,11 +92,21 @@ export class SupabaseProvider {
       if (this.destroyed) return;
       if (status === "SUBSCRIBED") {
         this.onStatus?.("connected");
-        // Ask peers for anything we don't have (in case Postgres was stale).
+        // Two-way reconcile on every (re)subscribe:
+        //  - pull: ask peers for anything we don't have (Postgres may be stale).
+        //  - push: hand peers our full state so anything we changed while
+        //    disconnected (which was broadcast into a dead channel and lost)
+        //    reaches them. Y.applyUpdate is idempotent, so re-sending state a
+        //    peer already has is harmless.
         void this.channel.send({
           type: "broadcast",
           event: "yjs-sync-request",
           payload: { sv: bytesToBase64(Y.encodeStateVector(this.doc)) },
+        });
+        void this.channel.send({
+          type: "broadcast",
+          event: "yjs-sync-step",
+          payload: { u: bytesToBase64(Y.encodeStateAsUpdate(this.doc)) },
         });
       } else if (
         status === "CHANNEL_ERROR" ||

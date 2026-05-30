@@ -82,7 +82,7 @@ export function Toolbar({
   onShowShortcuts,
 }: Props) {
   return (
-    <div className="glass pointer-events-auto absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-1 rounded-xl p-1.5">
+    <div className="glass no-scrollbar pointer-events-auto absolute left-1/2 top-4 z-20 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 items-center gap-1 overflow-x-auto rounded-xl p-1.5 [&>*]:shrink-0">
       {/* Tools */}
       <div className="flex items-center gap-1">
         {TOOLS.map((t) => {

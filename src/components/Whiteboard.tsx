@@ -15,6 +15,7 @@ import {
   initialViewport,
 } from "@/lib/canvas/viewport";
 import { createRoomDoc, getShapesMap } from "@/lib/yjs/doc";
+import { type ProviderStatus } from "@/lib/yjs/supabase-provider";
 import { usePresence, type Me } from "@/lib/presence/usePresence";
 import { createUndoManager } from "@/lib/yjs/undo";
 import {
@@ -34,7 +35,24 @@ type RoomState = { doc: Y.Doc; undo: Y.UndoManager };
 
 export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
   const [room, setRoom] = useState<RoomState | null>(null);
-  const [status, setStatus] = useState<ConnectionStatus>("loading");
+  // Connection state is derived from two signals: the realtime provider's view
+  // of the channel, and the browser's own online/offline state (which flips
+  // instantly, before the socket notices a dropped network).
+  const [providerStatus, setProviderStatus] = useState<
+    ProviderStatus | "loading" | "local"
+  >("loading");
+  const [online, setOnline] = useState(true);
+
+  const status: ConnectionStatus =
+    providerStatus === "local"
+      ? "local"
+      : !online
+        ? "offline"
+        : providerStatus === "connected"
+          ? "live"
+          : providerStatus === "connecting" || providerStatus === "loading"
+            ? "loading"
+            : "reconnecting"; // channel dropped but the network is up
 
   const [tool, setTool] = useState<Tool>("select");
   const [color, setColorName] = useState<ShapeColorName>("black");
@@ -71,16 +89,7 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
   // --- create the Yjs doc + persistence (browser only) ----------------------
   useEffect(() => {
     const rd = createRoomDoc(roomId, {
-      onStatus: (s) =>
-        setStatus(
-          s === "connected"
-            ? "live"
-            : s === "connecting"
-              ? "loading"
-              : navigator.onLine
-                ? "reconnecting"
-                : "offline",
-        ),
+      onStatus: (s) => setProviderStatus(s),
     });
     const undo = createUndoManager(rd.doc);
     // Instantiating a browser-only external resource and handing it to React —
@@ -90,7 +99,7 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
     // Local-only mode (no Supabase): the doc is "saved on this device" once the
     // IndexedDB cache has loaded. With a provider, status is driven by onStatus.
     rd.whenReady.then(() => {
-      if (!rd.provider) setStatus("local");
+      if (!rd.provider) setProviderStatus("local");
     });
 
     const shapesMap = getShapesMap(rd.doc);
@@ -110,6 +119,19 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
       rd.destroy();
     };
   }, [roomId]);
+
+  // Track the browser's connectivity so the badge flips to "Offline" the moment
+  // the network drops, and recovers immediately when it returns.
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
 
   const handleDelete = useCallback(() => {
     const { room: r, selectedId: id } = stateRef.current;

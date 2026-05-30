@@ -60,19 +60,19 @@ export default async function RoomPage({
   }
 
   return (
-    <main className="flex flex-1 flex-col">
-      <header className="z-30 flex items-center justify-between border-b border-border px-6 py-3">
-        <div className="flex items-center gap-3">
+    <main className="flex h-[100dvh] flex-col overflow-hidden overscroll-none">
+      <header className="z-30 flex items-center justify-between border-b border-border px-4 py-3 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/"
-            className="flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
+            className="flex shrink-0 items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
           >
             <ArrowLeft className="size-4" />
             Boards
           </Link>
-          <span className="h-5 w-px bg-border" aria-hidden />
-          <Logo size={20} />
-          <h1 className="font-semibold text-foreground">{room.name}</h1>
+          <span className="h-5 w-px shrink-0 bg-border" aria-hidden />
+          <Logo size={20} className="shrink-0" />
+          <h1 className="truncate font-semibold text-foreground">{room.name}</h1>
         </div>
       </header>
       <Whiteboard
