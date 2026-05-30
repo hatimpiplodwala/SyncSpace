@@ -8,38 +8,84 @@ import { userColor } from "@/lib/colors";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Whiteboard } from "@/components/Whiteboard";
+import { ShareDialog } from "@/components/ShareDialog";
+import { AccessRequestsTray } from "@/components/AccessRequestsTray";
+import { RoomSettingsDialog } from "@/components/RoomSettingsDialog";
+import { RequestAccessButton } from "@/components/RequestAccessButton";
+
+type RoomRow = Pick<
+  Room,
+  "id" | "name" | "owner_id" | "deleted_at" | "invite_token"
+>;
 
 // Realtime collaborative canvas: local Yjs + IndexedDB, synced over Supabase
 // (doc updates) with a separate presence channel for multi-user cursors.
+// Sharing/admin (Phase 6): invite-token join, access requests, owner controls.
 export default async function RoomPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ roomId: string }>;
+  searchParams: Promise<{ t?: string | string[] }>;
 }) {
   const { roomId } = await params;
+  const { t } = await searchParams;
+  const token = typeof t === "string" ? t : undefined;
+
   const { user, profile } = await getAuthContext();
   if (!user) redirect("/login");
   if (!profile) redirect("/onboarding");
 
   const supabase = await createClient();
-  const { data: room } = await supabase
-    .from("rooms")
-    .select("id, name, owner_id, deleted_at")
-    .eq("id", roomId)
-    .maybeSingle<Pick<Room, "id" | "name" | "owner_id" | "deleted_at">>();
+
+  const fetchRoom = async () =>
+    (
+      await supabase
+        .from("rooms")
+        .select("id, name, owner_id, deleted_at, invite_token")
+        .eq("id", roomId)
+        .maybeSingle<RoomRow>()
+    ).data;
 
   // RLS hides rooms the user isn't a member of, so a null row == no access.
+  const room = await fetchRoom();
+
+  // Not a member yet, but the URL carries an invite token: try to join, then
+  // redirect to the clean URL so we re-render as a member (and drop the token
+  // from history). join_room_with_token validates the token server-side.
+  if (!room && token) {
+    const { data: joined } = await supabase.rpc("join_room_with_token", {
+      p_room_id: roomId,
+      p_token: token,
+    });
+    if (joined) redirect(`/r/${roomId}`);
+  }
+
   if (!room) {
+    const { data: reqRow } = await supabase
+      .from("room_access_requests")
+      .select("status")
+      .eq("room_id", roomId)
+      .eq("user_id", user.id)
+      .maybeSingle<{ status: string }>();
+    const initialStatus =
+      reqRow?.status === "pending"
+        ? "pending"
+        : reqRow?.status === "denied"
+          ? "denied"
+          : "none";
+
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+      <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
         <h1 className="text-xl font-bold text-foreground">
-          No access to this board
+          You don&apos;t have access to this board
         </h1>
         <p className="max-w-sm text-sm text-muted-foreground">
-          You&apos;re not a member of this board. (The invite-link &amp;
-          request-access flow lands in Phase 6.)
+          Ask the owner for an invite link, or request access and they can let
+          you in.
         </p>
-        <Button asChild variant="outline" className="mt-2">
+        <RequestAccessButton roomId={roomId} initialStatus={initialStatus} />
+        <Button asChild variant="ghost" size="sm" className="mt-2">
           <Link href="/">Back to your boards</Link>
         </Button>
       </main>
@@ -59,9 +105,21 @@ export default async function RoomPage({
     );
   }
 
+  const isOwner = room.owner_id === user.id;
+
+  let pendingCount = 0;
+  if (isOwner) {
+    const { count } = await supabase
+      .from("room_access_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("room_id", roomId)
+      .eq("status", "pending");
+    pendingCount = count ?? 0;
+  }
+
   return (
     <main className="flex h-[100dvh] flex-col overflow-hidden overscroll-none">
-      <header className="z-30 flex items-center justify-between border-b border-border px-4 py-3 sm:px-6">
+      <header className="z-30 flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/"
@@ -72,8 +130,22 @@ export default async function RoomPage({
           </Link>
           <span className="h-5 w-px shrink-0 bg-border" aria-hidden />
           <Logo size={20} className="shrink-0" />
-          <h1 className="truncate font-semibold text-foreground">{room.name}</h1>
+          <h1 className="truncate font-semibold text-foreground">
+            {room.name}
+          </h1>
         </div>
+
+        {isOwner && (
+          <div className="flex shrink-0 items-center gap-2">
+            <AccessRequestsTray roomId={room.id} initialCount={pendingCount} />
+            <ShareDialog roomId={room.id} inviteToken={room.invite_token} />
+            <RoomSettingsDialog
+              roomId={room.id}
+              currentName={room.name}
+              currentUserId={user.id}
+            />
+          </div>
+        )}
       </header>
       <Whiteboard
         roomId={room.id}
