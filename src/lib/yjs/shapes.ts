@@ -1,9 +1,4 @@
-// Read/write helpers over the Yjs shape model.
-//
-// Each shape is a nested Y.Map keyed by its id inside the top-level "shapes"
-// map. Per-field updates (`shape.set('x', …)`) mean concurrent moves resolve as
-// LWW *per field* without re-integrating the note's Y.Text — which a whole-object
-// `map.set(id, {...prev})` would do, and Yjs forbids re-integrating a live type.
+// Read/write helpers over the Yjs shape model (one nested Y.Map per shape, LWW per field).
 
 import * as Y from "yjs";
 import type {

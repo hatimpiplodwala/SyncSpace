@@ -1,5 +1,4 @@
-// Removes the throwaway room created in global-setup (cascades to its members,
-// updates and snapshots). The test users are left in place for reuse.
+// Removes the throwaway room from global-setup (cascades); test users are left for reuse.
 
 import { createClient } from "@supabase/supabase-js";
 import { readFile } from "node:fs/promises";

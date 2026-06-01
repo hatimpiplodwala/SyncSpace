@@ -1,12 +1,6 @@
 "use server";
 
-// Room sharing + admin server actions (PRD §7 Phase 6).
-//
-// Authorization is enforced entirely by RLS (see supabase/migrations/0001_init.sql):
-//   - rooms_update / room_members_insert / room_members_delete / access_requests_update
-//     all require is_room_owner(...), so a non-owner's write simply affects zero
-//     rows. The UI only surfaces these to owners; RLS is the real gate.
-//   - access_requests_insert requires auth.uid() = user_id (request for yourself).
+// Room sharing + admin server actions; authorization is enforced entirely by RLS (see 0001_init.sql).
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";

@@ -35,9 +35,7 @@ type RoomState = { doc: Y.Doc; undo: Y.UndoManager };
 
 export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
   const [room, setRoom] = useState<RoomState | null>(null);
-  // Connection state is derived from two signals: the realtime provider's view
-  // of the channel, and the browser's own online/offline state (which flips
-  // instantly, before the socket notices a dropped network).
+  // Connection state derives from the provider's channel view plus the browser's online/offline state.
   const [providerStatus, setProviderStatus] = useState<
     ProviderStatus | "loading" | "local"
   >("loading");
@@ -66,8 +64,7 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
 
-  // Presence (multi-user cursors) over its own channel. Cursors render in world
-  // coords; the overlay re-projects through this viewport ref each frame.
+  // Presence cursors render in world coords; the overlay re-projects via this viewport ref.
   const { peers, buffer, sendCursor } = usePresence(roomId, me);
   const viewportRef = useRef<Viewport>(initialViewport());
   const handleViewportChange = useCallback((vp: Viewport) => {
@@ -92,12 +89,10 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
       onStatus: (s) => setProviderStatus(s),
     });
     const undo = createUndoManager(rd.doc);
-    // Instantiating a browser-only external resource and handing it to React —
-    // the one extra render (null -> doc) is intended here.
+    // Hand the browser-only doc to React; the one extra render (null -> doc) is intended.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRoom({ doc: rd.doc, undo });
-    // Local-only mode (no Supabase): the doc is "saved on this device" once the
-    // IndexedDB cache has loaded. With a provider, status is driven by onStatus.
+    // Local-only mode: "saved on this device" once IndexedDB loads; with a provider, onStatus drives it.
     rd.whenReady.then(() => {
       if (!rd.provider) setProviderStatus("local");
     });
@@ -120,8 +115,7 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
     };
   }, [roomId]);
 
-  // Track the browser's connectivity so the badge flips to "Offline" the moment
-  // the network drops, and recovers immediately when it returns.
+  // Track connectivity so the badge flips to Offline the moment the network drops.
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
     update();
@@ -144,8 +138,7 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
   const handleUndo = useCallback(() => stateRef.current.room?.undo.undo(), []);
   const handleRedo = useCallback(() => stateRef.current.room?.undo.redo(), []);
 
-  // Picking a swatch sets the default for new shapes AND recolors the current
-  // selection (if it belongs to that palette).
+  // Picking a swatch sets the new-shape default and recolors the current selection.
   const handleShapeColor = useCallback((name: ShapeColorName) => {
     setColorName(name);
     const { room: r, selectedId: id } = stateRef.current;
@@ -220,8 +213,7 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [handleDelete, handleUndo, handleRedo]);
 
-  // Swatches drive the note palette while placing a note or with a note
-  // selected; otherwise they drive the shape palette.
+  // Swatches drive the note palette when placing/selecting a note, else the shape palette.
   const selectedType =
     room && selectedId ? getShapeType(room.doc, selectedId) : null;
   const colorMode: "shape" | "note" =

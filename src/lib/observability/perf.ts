@@ -1,10 +1,4 @@
-// Lightweight User Timing wrappers around hot paths (CRDT apply, canvas render).
-//
-// Uses the standard performance.mark / performance.measure API so the spans show
-// up in the browser DevTools "Performance" panel (User Timing track) and in any
-// PerformanceObserver-based RUM. Guarded so it's a no-op where `performance`
-// isn't available (e.g. the server), and marks/measures are cleared after each
-// span so the entry buffer can't grow unbounded on the 60fps render path.
+// User Timing wrappers around hot paths (CRDT apply, canvas render); no-op without `performance`.
 
 const canMeasure =
   typeof performance !== "undefined" &&
@@ -24,7 +18,7 @@ export function timed<T>(label: string, fn: () => T): T {
     try {
       performance.measure(label, start, end);
     } catch {
-      // measure can throw if a mark was evicted; ignore — timing is best-effort.
+      // measure can throw if a mark was evicted; timing is best-effort.
     }
     performance.clearMarks(start);
     performance.clearMarks(end);

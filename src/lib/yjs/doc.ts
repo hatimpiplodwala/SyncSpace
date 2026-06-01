@@ -1,7 +1,4 @@
-// Composes the per-room Y.Doc with local IndexedDB persistence.
-//
-// Phase 2: IndexedDB only — this already gives "reload preserves the board".
-// Phase 3 will add the Supabase realtime provider alongside the same doc.
+// Per-room Y.Doc with IndexedDB persistence and optional Supabase realtime sync.
 
 import * as Y from "yjs";
 import { IndexeddbPersistence } from "y-indexeddb";
@@ -12,9 +9,7 @@ import {
   type ProviderStatus,
 } from "./supabase-provider";
 
-// Origin tag for *local* mutations. The UndoManager only tracks changes with
-// this origin (so it won't undo a remote peer's edits), and the realtime
-// provider broadcasts/persists local edits while ignoring its own + indexeddb.
+// Origin tag for local edits — undo tracks only these; the provider ignores its own echoes.
 export const LOCAL_ORIGIN = "local";
 
 export type RoomDoc = {
@@ -39,8 +34,7 @@ export function createRoomDoc(
   const persistence = new IndexeddbPersistence(`syncspace:${roomId}`, doc);
   const whenReady = persistence.whenSynced.then(() => undefined);
 
-  // Compose realtime sync + Postgres durability over the same doc. Without
-  // config we stay local-only (IndexedDB), exactly like Phase 2.
+  // Realtime sync + Postgres durability over the same doc; local-only without config.
   let provider: SupabaseProvider | null = null;
   if (isSupabaseConfigured) {
     provider = new SupabaseProvider(createClient(), roomId, doc, {

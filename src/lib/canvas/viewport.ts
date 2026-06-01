@@ -1,8 +1,4 @@
-// Pan/zoom state and world <-> screen transforms.
-//
-// Model: screen = world * scale + offset  (offset is in screen/CSS pixels).
-// The renderer applies the same transform to the 2D context; pointer math uses
-// these helpers so cursors and hit-tests stay correct at any zoom.
+// Pan/zoom state and world <-> screen transforms (screen = world * scale + offset).
 
 export type Viewport = {
   scale: number;
@@ -52,8 +48,8 @@ export function zoomAt(
   anchorY: number,
 ): Viewport {
   const nextScale = clampScale(vp.scale * factor);
-  // Effective factor after clamping (so anchor math matches the applied scale).
-  const applied = nextScale / vp.scale;
+  const applied = nextScale / vp.scale; // effective factor after clamping
+
   return {
     scale: nextScale,
     offsetX: anchorX - (anchorX - vp.offsetX) * applied,

@@ -3,9 +3,7 @@ import { render, resizeHandleScreenRect } from "./render";
 import type { Viewport } from "./viewport";
 import type { RectShape, PenShape } from "@/types/shapes";
 
-// Recording stand-in for CanvasRenderingContext2D: every method call and every
-// property assignment is pushed to `calls` so tests can assert on draw behaviour
-// without a real canvas.
+// Recording stand-in for CanvasRenderingContext2D: every call/assignment is pushed to `calls`.
 type Call =
   | { kind: "call"; name: string; args: unknown[] }
   | { kind: "set"; name: string; value: unknown };

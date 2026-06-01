@@ -1,11 +1,4 @@
-// Pure renderer: draws shapes (in world coords) through the viewport transform
-// onto a 2D context.
-//
-// devicePixelRatio is baked into every transform here so the caller only has to
-// size the backing store (canvas.width = cssW * dpr). Three coordinate spaces:
-//   - backing-store px:  setTransform(1, …)            -> clearRect
-//   - CSS/screen px:     setTransform(dpr, …)          -> grid, selection
-//   - world px:          setTransform(scale*dpr, …)    -> shapes
+// Pure renderer: draws shapes through the viewport transform onto a 2D context (dpr baked in).
 
 import type { Shape } from "@/types/shapes";
 import { shapeBounds } from "@/types/shapes";
@@ -56,15 +49,15 @@ export function render(
 ): void {
   const { dpr } = opts;
 
-  // 1. Clear the whole backing store.
+  // Clear the backing store.
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, opts.width * dpr, opts.height * dpr);
 
-  // 2. Background dot grid (screen space).
+  // Background dot grid (screen space).
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   drawDotGrid(ctx, vp, opts.width, opts.height);
 
-  // 3. Shapes (world space).
+  // Shapes (world space).
   ctx.setTransform(
     vp.scale * dpr,
     0,
@@ -79,7 +72,7 @@ export function render(
   }
   if (opts.preview) drawShape(ctx, opts.preview, false);
 
-  // 4. Selection outline (screen space — crisp regardless of zoom).
+  // Selection outline (screen space — crisp regardless of zoom).
   if (opts.selectedId) {
     const sel = shapes.find((s) => s.id === opts.selectedId);
     if (sel) {

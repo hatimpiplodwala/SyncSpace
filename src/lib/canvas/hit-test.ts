@@ -1,5 +1,4 @@
-// Pointer (world coords) -> topmost shape id. Scans in descending z so the
-// visually-topmost shape wins.
+// Pointer (world coords) -> topmost shape id, scanning in descending z.
 
 import type { Shape } from "@/types/shapes";
 import { shapeBounds } from "@/types/shapes";

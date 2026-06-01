@@ -14,9 +14,7 @@ type Props = {
   onClose: () => void;
 };
 
-// Reconcile a textarea's full value into a Y.Text by editing only the changed
-// middle (common prefix + suffix preserved). Keeps edits character-granular so
-// concurrent typing merges cleanly once realtime lands.
+// Reconcile a textarea value into a Y.Text by editing only the changed middle, so typing merges cleanly.
 function applyTextDiff(doc: Y.Doc, ytext: Y.Text, next: string): void {
   const prev = ytext.toString();
   if (prev === next) return;

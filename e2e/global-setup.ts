@@ -1,10 +1,5 @@
-// Prepares two authenticated browser sessions for the sync e2e by injecting
-// Supabase sessions (no magic-link round trip). Using the service-role key it
-// ensures two confirmed users + their profiles exist, creates a fresh room they
-// both belong to, then signs each user in through @supabase/ssr so the library
-// itself produces correctly-formatted (and chunked) auth cookies — which we save
-// as Playwright storage states. Writes meta.json with the room id, or a skip
-// marker when the env isn't configured so the spec can skip cleanly.
+// Prepares two authenticated browser sessions for the sync e2e using the service-role key:
+// ensures two users + a shared room exist, signs them in via @supabase/ssr, saves storage states.
 
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
@@ -49,8 +44,7 @@ export default async function globalSetup() {
     return;
   }
 
-  // No generated Database types in this project, so use a permissive client for
-  // the admin writes below.
+  // No generated Database types, so use a permissive client for the admin writes.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const admin = createClient<any>(SUPABASE_URL, SERVICE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -84,8 +78,7 @@ export default async function globalSetup() {
   const ids: Record<string, string> = {};
   for (const u of USERS) ids[u.tag] = await ensureUser(u);
 
-  // 2. Fresh room owned by A (starts empty); add B as an editor. The
-  //    add_owner_as_member trigger handles A's membership.
+  // 2. Fresh room owned by A; add B as an editor (the trigger handles A's membership).
   const roomId = crypto.randomUUID();
   const { error: roomErr } = await admin
     .from("rooms")

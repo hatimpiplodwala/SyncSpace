@@ -1,9 +1,4 @@
-// Throttle + merge a stream of Yjs updates into at most one flush per interval.
-//
-// Used for both the live broadcast (short interval, keeps motion smooth without
-// firing a message per pointermove) and Postgres persistence (longer interval,
-// one row per flush). Throttle — not debounce — so continuous dragging keeps
-// emitting instead of going silent until the user stops.
+// Throttle + merge Yjs updates into at most one flush per interval (so dragging keeps emitting).
 
 import * as Y from "yjs";
 

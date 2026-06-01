@@ -1,15 +1,5 @@
-// Bespoke Yjs provider over a Supabase Realtime channel (mirrors the y-websocket
-// idea: a dumb pipe carrying opaque Yjs updates; clients converge via CRDT).
-//
-// On construct:
-//   1. listen to local doc updates -> broadcast (batched) + persist
-//   2. bootstrap the doc from Postgres (snapshot + tail updates)
-//   3. subscribe to the channel; once subscribed, send a sync-request so any
-//      peer with newer state than Postgres hands us the diff
-//
-// Echo/loop avoidance is by Yjs origin: remote updates are applied with `this`
-// as origin, and we ignore updates whose origin is `this` (or y-indexeddb, which
-// replays local cache on load) so we never re-broadcast or re-persist them.
+// Yjs provider over a Supabase Realtime channel: a dumb pipe of opaque updates, converging via CRDT.
+// Loops are avoided by Yjs origin — remote updates apply with `this`, and `this`/y-indexeddb origins are ignored.
 
 import * as Y from "yjs";
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
@@ -93,12 +83,7 @@ export class SupabaseProvider {
       if (this.destroyed) return;
       if (status === "SUBSCRIBED") {
         this.onStatus?.("connected");
-        // Two-way reconcile on every (re)subscribe:
-        //  - pull: ask peers for anything we don't have (Postgres may be stale).
-        //  - push: hand peers our full state so anything we changed while
-        //    disconnected (which was broadcast into a dead channel and lost)
-        //    reaches them. Y.applyUpdate is idempotent, so re-sending state a
-        //    peer already has is harmless.
+        // Two-way reconcile on every (re)subscribe: pull peers' newer state, push ours (idempotent).
         void this.channel.send({
           type: "broadcast",
           event: "yjs-sync-request",

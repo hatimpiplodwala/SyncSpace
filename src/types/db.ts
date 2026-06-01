@@ -1,5 +1,4 @@
 // Hand-written row types for the Postgres tables in 0001_init.sql.
-// (Can be replaced later with `supabase gen types typescript`.)
 
 export type Profile = {
   user_id: string;

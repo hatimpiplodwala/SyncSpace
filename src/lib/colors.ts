@@ -1,7 +1,4 @@
-// Two distinct palettes (PRD §6):
-//  - SHAPE_PALETTE: the six fixed colors for strokes/shapes/notes.
-//  - USER_PALETTE:  twelve hues for cursors/avatars, assigned deterministically
-//    from the user id so a person keeps the same color across sessions.
+// Palettes: fixed shape colors, soft note colors, and per-user cursor/avatar hues.
 
 export const SHAPE_COLORS = {
   black: "#111827",
@@ -15,8 +12,7 @@ export const SHAPE_COLORS = {
 export type ShapeColorName = keyof typeof SHAPE_COLORS;
 export const SHAPE_PALETTE = Object.values(SHAPE_COLORS);
 
-// Sticky notes get their own soft palette so dark text is always legible —
-// the saturated shape colors (esp. black) make terrible notes.
+// Sticky notes use a soft palette so dark text stays legible.
 export const NOTE_COLORS = {
   yellow: "#fef08a",
   orange: "#fed7aa",
@@ -46,7 +42,7 @@ export const USER_PALETTE = [
   "#ec4899", // pink
 ] as const;
 
-// Stable string hash (FNV-1a-ish) so the color is deterministic per user id.
+// Stable FNV-1a-ish hash so the color is deterministic per user id.
 function hashString(input: string): number {
   let hash = 2166136261;
   for (let i = 0; i < input.length; i++) {

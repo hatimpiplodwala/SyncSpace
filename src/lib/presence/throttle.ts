@@ -1,17 +1,11 @@
-// Presence plumbing for multi-user cursors (PRD §7 Phase 4):
-//   - createThrottle: cap cursor broadcasts at ~30 Hz (pointermove fires far
-//     faster) so we get smooth motion without flooding the channel.
-//   - CursorBuffer: per-peer eased smoothing toward the latest received world
-//     coordinate, so remote cursors glide instead of teleporting between the
-//     30 Hz samples.
+// Presence plumbing for cursors: throttle broadcasts to ~30 Hz and ease peers between samples.
 
 import type { Point } from "@/lib/canvas/viewport";
 
 export const CURSOR_HZ = 30;
 export const CURSOR_INTERVAL_MS = Math.round(1000 / CURSOR_HZ); // ~33 ms
 
-// Trailing throttle: invoke at most once per interval, always delivering the
-// most recent args. Leading edge fires immediately when idle.
+// Throttle: at most once per interval with the latest args; fires immediately when idle.
 export function createThrottle<A extends unknown[]>(
   intervalMs: number,
   fn: (...args: A) => void,

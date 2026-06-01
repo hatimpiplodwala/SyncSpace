@@ -1,10 +1,6 @@
 "use client";
 
-// Renders other users' cursors as a pointer-events-none overlay above the
-// canvas. Positions are stored in *world* coordinates, so a single rAF loop
-// re-projects them through the live viewport each frame — they stay glued to
-// the right spot at any pan/zoom (PRD §7 Phase 4). The CursorBuffer eases the
-// rendered position toward the latest 30 Hz sample so motion is smooth.
+// Overlay of other users' cursors: a rAF loop re-projects world-space positions through the viewport each frame.
 
 import { useEffect, useRef } from "react";
 import { type Viewport, worldToScreen } from "@/lib/canvas/viewport";

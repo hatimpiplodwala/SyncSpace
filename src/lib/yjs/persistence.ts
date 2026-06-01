@@ -1,17 +1,11 @@
-// Postgres durability for the Yjs doc (PRD §5):
-//   - loadFromPostgres: snapshot + tail updates -> apply to the doc on join
-//   - createUpdateFlusher: append local updates to room_updates, batched 200 ms
-//
-// The realtime broadcast (supabase-provider) handles *live* sync; this layer is
-// what lets a fresh joiner or a reload reconstruct the board.
+// Postgres durability for the Yjs doc: bootstrap from snapshot + tail, append local updates.
 
 import * as Y from "yjs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { bytesToPgHex, pgHexToBytes } from "./encoding";
 
 const PERSIST_INTERVAL_MS = 200;
-// Back-off used when an append fails (typically: we're offline). The browser
-// `online` event also kicks an immediate retry, so this is just a safety net.
+// Back-off when an append fails (offline); the `online` event also kicks an immediate retry.
 const RETRY_INTERVAL_MS = 3000;
 
 /** Apply the stored snapshot then every appended update, in order. */
@@ -55,22 +49,12 @@ export type UpdateFlusher = {
   destroy: () => void;
 };
 
-/**
- * Buffer local updates and append them to room_updates (one merged row / flush).
- *
- * Unlike a fire-and-forget batcher, this retains updates until the insert
- * actually succeeds: while offline the insert fails, so the merged bytes are
- * kept and retried (on the next queue, on a back-off timer, and immediately on
- * the browser `online` event). This is what lets edits made while disconnected
- * reach durable storage once the connection returns — without it, offline
- * strokes would live only in the local IndexedDB cache and never reach Postgres
- * (so a fresh joiner would never see them).
- */
+/** Buffer local updates and append to room_updates, retaining bytes until the insert succeeds. */
 export function createUpdateFlusher(
   supabase: SupabaseClient,
   roomId: string,
 ): UpdateFlusher {
-  // Updates not yet confirmed written. Merged on flush; kept on failure.
+  // Updates not yet confirmed written; merged on flush, kept on failure.
   let pending: Uint8Array[] = [];
   let timer: ReturnType<typeof setTimeout> | null = null;
   let inFlight = false;
@@ -95,13 +79,11 @@ export function createUpdateFlusher(
     inFlight = false;
 
     if (error) {
-      // Couldn't persist (usually offline): keep the bytes at the front so
-      // they're merged with anything queued since, and try again later.
+      // Couldn't persist (usually offline): keep the bytes at the front and retry later.
       pending = [merged, ...pending];
       schedule(RETRY_INTERVAL_MS);
     } else if (pending.length > 0) {
-      // More arrived while the insert was in flight.
-      schedule(PERSIST_INTERVAL_MS);
+      schedule(PERSIST_INTERVAL_MS); // more arrived while the insert was in flight
     }
   }
 

@@ -1,9 +1,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 
-// Minimal .env.local loader for the Playwright process (Playwright, unlike Next,
-// doesn't auto-load env files). Only sets keys that aren't already in the
-// environment, so real env / CI secrets win.
+// Minimal .env.local loader for Playwright; only sets keys not already in the environment.
 export function loadLocalEnv(): void {
   const file = path.join(process.cwd(), ".env.local");
   if (!existsSync(file)) return;

@@ -76,12 +76,8 @@ export async function createRoom(formData: FormData): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Generate the id client-side and insert WITHOUT a RETURNING clause
-  // (no `.select()`). Using RETURNING here would make Postgres apply the
-  // `rooms_select` policy (is_room_member) to the new row, but membership is
-  // only added by the AFTER INSERT trigger — which fires after that RLS check —
-  // so RETURNING would fail with a 42501. A plain insert only runs the INSERT
-  // WITH CHECK (auth.uid() = owner_id), which passes.
+  // Insert without RETURNING: the rooms_select RLS policy would reject it before the
+  // membership trigger fires, so generate the id here and skip .select().
   const id = crypto.randomUUID();
   const { error } = await supabase
     .from("rooms")

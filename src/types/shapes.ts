@@ -1,9 +1,4 @@
-// Shape model for the whiteboard.
-//
-// Source of truth lives in `ydoc.getMap('shapes')` where each value is a nested
-// `Y.Map` (see src/lib/yjs/shapes.ts). These TS types are the *plain read view*
-// used by the renderer and hit-tester. Note text is read as a plain string here;
-// the inline editor binds to the underlying `Y.Text` directly.
+// Plain read-view shape types over the Yjs doc, used by the renderer and hit-tester.
 
 export type ShapeType = "pen" | "note" | "rect" | "ellipse";
 
@@ -12,8 +7,7 @@ export type ShapeBase = {
   z: number;
 };
 
-// Pen points are stored as a flat [x0, y0, x1, y1, …] array in world coords,
-// committed atomically on pointer-up (no CRDT churn while drawing).
+// Pen points are a flat [x0, y0, x1, y1, …] array in world coords.
 export type PenShape = ShapeBase & {
   type: "pen";
   points: number[];

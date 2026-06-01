@@ -1,8 +1,4 @@
-// Binary <-> string codecs for moving Yjs updates over two channels:
-//   - base64 for Realtime broadcast (payloads are JSON)
-//   - Postgres hex ("\x…") for the bytea columns (how PostgREST round-trips bytea)
-// Browser-only (uses btoa/atob); the provider/persistence that import this are
-// never loaded on the server.
+// Binary <-> string codecs for Yjs updates: base64 for broadcast, Postgres hex for bytea. Browser-only.
 
 export function bytesToBase64(bytes: Uint8Array): string {
   let binary = "";

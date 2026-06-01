@@ -1,16 +1,7 @@
 "use client";
 
-// Multi-user cursor presence over a *dedicated* Supabase Realtime channel
-// (`presence:<roomId>`), deliberately separate from the doc-sync channel so
-// 30 Hz cursor spam never touches the CRDT update log (PRD §3).
-//
-//   - Roster (who's online + name/color) comes from Realtime *presence* track,
-//     which gives reliable join/leave events.
-//   - Cursor positions ride a high-frequency *broadcast* event (presence track
-//     isn't meant to be re-set 30×/sec).
-//
-// Each browser tab gets its own `conn` id so two tabs of the same account show
-// two distinct cursors.
+// Cursor presence on a dedicated channel: roster via presence track, positions via broadcast.
+// Each tab gets its own `conn` id so two tabs of one account show two cursors.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -32,8 +23,7 @@ export function usePresence(roomId: string, me: Me) {
   const [buffer] = useState(() => new CursorBuffer());
   const [conn] = useState(newConnId);
 
-  // Throttled cursor sender, wired up inside the effect (where it can close over
-  // the live channel) and surfaced to callers through this ref.
+  // Throttled cursor sender, wired up inside the effect and surfaced through this ref.
   const sendRef = useRef<(x: number, y: number) => void>(() => {});
 
   useEffect(() => {

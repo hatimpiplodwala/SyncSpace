@@ -35,9 +35,7 @@ test("a rectangle drawn in one browser shows up in another", async ({ browser })
   await a.goto(`/r/${roomId}`);
   await b.goto(`/r/${roomId}`);
 
-  // Both reach the canvas (member + authed). Empty room => the onboarding hint
-  // is shown; it's bound to shapes-map size, so it's a reliable "is the board
-  // empty?" signal for both peers.
+  // Empty room shows the onboarding hint (bound to shapes-map size) — a reliable "board empty?" signal.
   await expect(a.getByText(HINT)).toBeVisible();
   await expect(b.getByText(HINT)).toBeVisible();
 
@@ -52,8 +50,7 @@ test("a rectangle drawn in one browser shows up in another", async ({ browser })
 
   // The shape exists locally for A...
   await expect(a.getByText(HINT)).toBeHidden();
-  // ...and propagates to B over Supabase Realtime. PRD target is <1s; allow a
-  // small margin for cloud round-trip / CI jitter.
+  // ...and propagates to B over Realtime (target <1s; margin for round-trip / CI jitter).
   await expect(b.getByText(HINT)).toBeHidden({ timeout: 2000 });
 
   await ctxA.close();

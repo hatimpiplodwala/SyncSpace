@@ -1,6 +1,4 @@
-// Stylized, decorative preview of the canvas — two collaborators' cursors
-// drifting over a few shapes. Pure CSS animation (no real session yet).
-// NOTE (Phase 7 polish): replace with a recorded read-only session loop.
+// Decorative CSS-animated canvas preview: two cursors drifting over a few shapes.
 
 export function LiveDemo() {
   return (

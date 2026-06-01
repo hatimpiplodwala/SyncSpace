@@ -82,8 +82,7 @@ export function CanvasLayer({
   const previewRef = useRef<Shape | null>(null);
   const spaceDownRef = useRef(false);
 
-  // Latest presence callbacks + last local cursor screen pos, read through refs
-  // so setViewportSynced stays stable (no churn in the wheel/pointer effects).
+  // Presence callbacks read through a ref so setViewportSynced stays stable.
   const presenceRef = useRef({ onViewportChange, onCursorMove });
   useEffect(() => {
     presenceRef.current = { onViewportChange, onCursorMove };
@@ -100,8 +99,7 @@ export function CanvasLayer({
     viewportRef.current = next;
     setViewport(next);
     presenceRef.current.onViewportChange?.(next);
-    // Re-project the (stationary) cursor so peers see it track the world point
-    // it's hovering as we pan/zoom.
+    // Re-project the stationary cursor so peers see it track its world point as we pan/zoom.
     const last = lastScreenRef.current;
     if (last) {
       const w = screenToWorld(next, last.x, last.y);
@@ -342,8 +340,7 @@ export function CanvasLayer({
     const vp = viewportRef.current;
     const world = screenToWorld(vp, sx, sy);
 
-    // Broadcast the local cursor (world coords) for presence, regardless of
-    // whatever gesture is in flight.
+    // Broadcast the local cursor (world coords) for presence, whatever gesture is in flight.
     lastScreenRef.current = { x: sx, y: sy };
     presenceRef.current.onCursorMove?.(world);
 
@@ -405,8 +402,7 @@ export function CanvasLayer({
 
     // Finish gestures only when the last pointer lifts.
     if (pointersRef.current.size >= 1) {
-      // Leaving a pinch with one finger still down: stop transforming (avoid a
-      // jump) until all fingers lift.
+      // Leaving a pinch with one finger down: stop transforming until all fingers lift.
       if (g.kind === "pinch") gestureRef.current = { kind: "none" };
       return;
     }
@@ -421,8 +417,7 @@ export function CanvasLayer({
         });
       }
     } else if (g.kind === "create") {
-      // Normalize so x,y is the top-left and w,h are positive (keeps the
-      // resize handle and hit-test math simple).
+      // Normalize so x,y is top-left and w,h are positive.
       const x = Math.min(g.sx, g.cx);
       const y = Math.min(g.sy, g.cy);
       const w = Math.abs(g.cx - g.sx);

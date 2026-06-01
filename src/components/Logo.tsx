@@ -1,5 +1,4 @@
-// SyncSpace logomark: two overlapping rounded squares (blue + sky) whose
-// intersection lightens — a visual nod to two people's edits merging (CRDT).
+// SyncSpace logomark: two overlapping rounded squares whose intersection lightens (edits merging).
 
 import { cn } from "@/lib/utils";
 

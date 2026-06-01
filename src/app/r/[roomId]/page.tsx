@@ -18,9 +18,7 @@ type RoomRow = Pick<
   "id" | "name" | "owner_id" | "deleted_at" | "invite_token"
 >;
 
-// Realtime collaborative canvas: local Yjs + IndexedDB, synced over Supabase
-// (doc updates) with a separate presence channel for multi-user cursors.
-// Sharing/admin (Phase 6): invite-token join, access requests, owner controls.
+// Room page: gate access via RLS, handle invite-token joins, then render the canvas.
 export default async function RoomPage({
   params,
   searchParams,
@@ -50,9 +48,7 @@ export default async function RoomPage({
   // RLS hides rooms the user isn't a member of, so a null row == no access.
   const room = await fetchRoom();
 
-  // Not a member yet, but the URL carries an invite token: try to join, then
-  // redirect to the clean URL so we re-render as a member (and drop the token
-  // from history). join_room_with_token validates the token server-side.
+  // Not a member but the URL carries a token: join (validated server-side), then redirect clean.
   if (!room && token) {
     const { data: joined } = await supabase.rpc("join_room_with_token", {
       p_room_id: roomId,

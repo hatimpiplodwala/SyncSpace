@@ -9,8 +9,7 @@ export type AuthContext = {
   profile: Profile | null;
 };
 
-// One round-trip helper for server components: who is signed in, and do they
-// have a profile yet (which determines whether onboarding is needed).
+// Server-component helper: who is signed in, and whether they have a profile yet.
 export async function getAuthContext(): Promise<AuthContext> {
   if (!isSupabaseConfigured) {
     return { configured: false, user: null, profile: null };

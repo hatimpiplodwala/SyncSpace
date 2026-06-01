@@ -27,9 +27,7 @@ export function ShareDialog({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  // Build the absolute URL on the client (the server doesn't know the origin).
-  // Intentionally render empty on the server/first paint, then fill in after
-  // mount — avoids a hydration mismatch on window.location.
+  // Build the absolute URL after mount to avoid a hydration mismatch on window.location.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setOrigin(window.location.origin), []);
 

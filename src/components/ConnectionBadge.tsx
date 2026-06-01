@@ -1,7 +1,6 @@
 "use client";
 
-// Connection status indicator. "live" shows nothing (no banner when all is well,
-// PRD §6); the other states surface a small frosted pill bottom-left.
+// Connection status indicator: "live" shows nothing; other states show a frosted pill bottom-left.
 
 import { cn } from "@/lib/utils";
 
