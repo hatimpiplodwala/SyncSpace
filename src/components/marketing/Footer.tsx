@@ -8,9 +8,7 @@ export function Footer() {
           <Logo size={22} />
           SyncSpace
         </div>
-        <p>
-          A real-time collaborative whiteboard demo · Next.js · Supabase · Yjs
-        </p>
+        <p>A real-time collaborative whiteboard demo</p>
       </div>
     </footer>
   );
