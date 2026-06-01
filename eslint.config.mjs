@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Deno edge functions — different runtime/globals, linted by Deno not here.
+    "supabase/**",
   ]),
 ]);
 

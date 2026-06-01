@@ -48,3 +48,10 @@ progress.txt
 
 # local tooling/session state (not for a public repo)
 .remember/
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+e2e/.auth/
