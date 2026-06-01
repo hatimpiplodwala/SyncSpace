@@ -14,7 +14,9 @@ export function Hero() {
             "radial-gradient(60% 50% at 20% 0%, color-mix(in oklab, var(--primary) 14%, transparent), transparent 70%)",
         }}
       />
-      <div className="mx-auto grid max-w-6xl gap-12 px-6 pt-20 pb-16 lg:grid-cols-2 lg:items-center lg:gap-8">
+
+      <div className="mx-auto grid max-w-6xl gap-12 px-6 pt-20 pb-20 lg:grid-cols-2 lg:items-center lg:gap-10">
+        {/* Content — left */}
         <div>
           <Badge
             variant="outline"
@@ -23,22 +25,22 @@ export function Hero() {
             <span className="size-1.5 rounded-full bg-primary" />
             Real-time · CRDT-synced · works offline
           </Badge>
-          <h1 className="mt-5 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Whiteboard together,
-            <br />
+          <h1 className="mt-6 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+            Whiteboard together,{" "}
             <span className="bg-[var(--gradient-brand)] bg-clip-text text-transparent">
               in real time.
             </span>
           </h1>
-          <p className="mt-4 max-w-md text-lg text-muted-foreground">
-            SyncSpace is a multiplayer canvas where every stroke, sticky note,
-            and shape merges instantly across everyone in the room — even after
-            you go offline.
+          <p className="mt-5 max-w-md text-lg text-muted-foreground">
+            A multiplayer canvas where every stroke, sticky note, and shape
+            merges instantly across the room — even after you go offline.
           </p>
           <div className="mt-8 max-w-md">
             <AuthForm />
           </div>
         </div>
+
+        {/* Live demo — right */}
         <div className="lg:pl-6">
           <LiveDemo />
         </div>

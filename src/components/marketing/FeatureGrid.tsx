@@ -22,14 +22,12 @@ const features = [
 export function FeatureGrid() {
   return (
     <section className="border-t border-border bg-secondary/40">
-      <div className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-center text-2xl font-bold tracking-tight text-foreground">
-          How it works
+      <div className="mx-auto max-w-5xl px-6 py-24">
+        <p className="text-center text-sm font-medium text-primary">How it works</p>
+        <h2 className="mx-auto mt-3 max-w-xl text-center text-3xl font-bold tracking-tight text-foreground">
+          A focused toolset built on distributed-systems fundamentals
         </h2>
-        <p className="mx-auto mt-2 max-w-xl text-center text-muted-foreground">
-          A focused toolset built on distributed-systems fundamentals.
-        </p>
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f) => (
             <Card
               key={f.title}

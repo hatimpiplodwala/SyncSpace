@@ -115,7 +115,7 @@ export default async function RoomPage({
 
   return (
     <main className="flex h-[100dvh] flex-col overflow-hidden overscroll-none">
-      <header className="z-30 flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6">
+      <header className="z-30 flex items-center justify-between gap-3 bg-background px-4 py-4 shadow-[var(--shadow-soft)] sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/"

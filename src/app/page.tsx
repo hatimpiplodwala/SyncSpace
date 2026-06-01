@@ -36,7 +36,7 @@ export default async function HomePage() {
 
   return (
     <main className="flex-1">
-      <header className="border-b border-border">
+      <header>
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <LogoWordmark />
           <UserMenu
@@ -86,7 +86,7 @@ export default async function HomePage() {
 function Landing() {
   return (
     <main className="flex-1">
-      <header className="border-b border-border">
+      <header>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <LogoWordmark />
           <Button asChild variant="ghost" size="sm">
