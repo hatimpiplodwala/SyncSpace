@@ -1,0 +1,7 @@
+import { createBrowserClient } from "@supabase/ssr";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./config";
+
+// Browser Supabase client; call lazily inside handlers/effects so module load never crashes.
+export function createClient() {
+  return createBrowserClient(SUPABASE_URL!, SUPABASE_ANON_KEY!);
+}

@@ -42,7 +42,7 @@ yarn-error.log*
 next-env.d.ts
 
 # --- SyncSpace: excluded from the repo (per request) ---
-supabase/
+/supabase/
 *.md
 progress.txt
 
