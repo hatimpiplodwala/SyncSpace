@@ -1,203 +1,229 @@
 # SyncSpace
 
-A real-time, multi-user collaborative whiteboard. Draw with pen, sticky notes,
-rectangles and ellipses on a pannable/zoomable canvas where every operation
-merges deterministically across users, survives reloads, and recovers from
-disconnects.
+**A real-time collaborative whiteboard where the server never merges anything.**
 
-Built to demonstrate **distributed state, CRDT conflict resolution, presence,
-and offline reconciliation** end to end.
+Open a room, share the link, and draw together — pen strokes, sticky notes, and
+shapes appear for everyone instantly, cursors and all. Lose your connection and
+keep working; your edits sync back the moment you're online again.
 
-> Stack: Next.js 16 (App Router) · TypeScript · Supabase (Auth · Realtime ·
-> Postgres · Edge Functions) · Yjs (CRDT) · y-indexeddb · HTML5 Canvas ·
-> Tailwind v4 / shadcn
+The interesting part isn't the whiteboard. It's that **there is no merge logic on
+the backend.** Conflict resolution lives entirely client-side in a CRDT, so the
+server is reduced to two boring jobs: relay opaque bytes between clients, and
+store opaque bytes durably. No locks, no operational transforms on a server, no
+"last save wins" data loss — just math that guarantees everyone converges.
+
+> **Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Supabase
+> (Postgres + RLS · Realtime · Auth · Edge Functions) · Yjs CRDT · y-indexeddb ·
+> HTML5 Canvas · Tailwind v4
+
+<!-- Live demo: replace with your deployed Vercel URL -->
+**Live demo:** _deployed on Vercel — add your URL here_
+
+---
+
+## Why it's built this way
+
+Most collaborative apps put the hard part on the server: a service that receives
+edits, resolves conflicts, and writes the canonical state. That server is the
+thing that's hard to scale, hard to make offline-tolerant, and easy to lose data
+in.
+
+SyncSpace pushes the hard part to the edge instead. Every client holds a full
+copy of the document as a **CRDT** (Conflict-free Replicated Data Type via
+[Yjs](https://github.com/yjs/yjs)). CRDTs have a mathematical property: apply the
+same set of updates in any order, on any client, and you land on identical state.
+That single property cascades into the whole design:
+
+- **No backend merge code** — the server is document-agnostic. It moves bytes.
+- **Offline is free** — a disconnected client is just a client whose updates
+  haven't propagated *yet*. When it reconnects, the same merge runs.
+- **No bespoke API tier** — clients talk straight to Postgres and Realtime, with
+  **Row-Level Security** as the only authorization boundary.
+
+The cost of this approach is a different set of trade-offs (trust, fan-out, and
+durability timing), covered honestly in [Trade-offs](#trade-offs) below.
+
+---
+
+## How it works
+
+### The document lives in three places
+
+Each room is one Yjs document. Shapes are stored in a top-level `Y.Map` keyed by
+id; each shape is itself a nested `Y.Map` (so position and color are
+last-writer-wins *per field*), and a sticky note's text is a `Y.Text` — a real
+collaborative-text CRDT, so two people can type into the same note and merge
+character by character.
+
+That one document is mirrored across three layers:
+
+```
+┌──────────────── Browser (Next.js client) ─────────────────┐
+│                                                            │
+│   HTML5 Canvas  ──renders──►  Yjs Doc  ◄──►  IndexedDB     │
+│                                  │         (offline cache) │
+│                                  │ binary updates          │
+│                                  ▼                          │
+│   SupabaseProvider ──broadcast──►   Presence channel       │
+│        │                            (cursors, names)       │
+└────────┼───────────────────────────────────────────────────┘
+         │ opaque Yjs bytes
+         ▼
+┌────────────────────────── Supabase ───────────────────────┐
+│  Realtime (broadcast + presence)   Auth (magic link)       │
+│  Postgres + RLS:                   Edge Function:          │
+│    rooms · room_members              compact-room          │
+│    room_snapshots · room_updates                           │
+│    profiles · room_access_requests                         │
+└────────────────────────────────────────────────────────────┘
+```
+
+1. **IndexedDB — local-first.** The cached doc loads instantly on open and every
+   edit is written locally first. This is what makes the canvas feel immediate and
+   what makes offline editing work at all.
+
+2. **Realtime — live sync.** A custom `SupabaseProvider` listens for local Yjs
+   updates, base64-encodes the binary diff, and broadcasts it on a per-room
+   channel. Peers apply it and converge. On every (re)connect it runs a two-way
+   sync handshake — exchanging state vectors so a returning client both catches up
+   *and* re-pushes anything its peers missed while it was gone.
+
+3. **Postgres — durability.** Rather than rewriting a blob on every edit, the doc
+   is persisted as a **snapshot plus an append-only log**: `room_snapshots` holds
+   compacted state, `room_updates` collects new diffs. Writes are cheap appends;
+   new joiners bootstrap by replaying snapshot-then-log.
+
+### Keeping it fast and lean
+
+- **Echo loops and undo** are both solved by Yjs *origins* — local edits are
+  tagged, remote/replayed updates are ignored by the broadcaster, and undo only
+  rewinds your own actions.
+- **Cursors get their own channel.** Presence (who's here) and cursor positions
+  are broadcast separately from the document, throttled to ~30 Hz, so high-
+  frequency pointer movement never bloats the persisted edit log.
+- **Compaction.** A Deno edge function (`compact-room`) folds the append-log back
+  into the snapshot once the log crosses a threshold, keeping bootstrap cheap. It
+  writes the new snapshot *before* deleting the folded rows, which makes it
+  idempotent — a crash mid-run simply re-folds next time.
+- **Graceful degradation.** Everything backend-touching is gated behind a config
+  check, so with no environment variables the app still runs as a fully local,
+  single-player whiteboard.
 
 ---
 
 ## Features
 
-- **Live multi-user canvas** — pen, sticky notes, rectangles, ellipses; select,
-  drag, resize, bring-to-front / send-to-back, delete; per-user undo/redo.
-- **Presence cursors** — see who's online with their name and color; cursors are
-  broadcast at 30 Hz in world coordinates and eased, so they stay aligned at any
-  pan/zoom.
-- **CRDT conflict resolution** — concurrent edits merge via Yjs with no
-  server-side merge logic. Same-shape drags resolve last-writer-wins; same-note
-  typing merges character-by-character via `Y.Text`.
-- **Offline-first** — local writes hit an in-browser Yjs doc + IndexedDB
-  immediately and queue while offline; on reconnect Yjs's diff sync reconciles
-  automatically. A connection badge makes the state (Live / Reconnecting /
-  Offline) explicit.
-- **Shareable rooms** — tokenized invite links (`/r/{roomId}?t={token}`) add the
-  visitor as an editor; the owner can regenerate the token to revoke access.
-  Non-members get a "Request access" page that the owner can approve.
-- **Room admin** — rename, member list with kick, soft-delete.
-- **Mobile** — pointer-events drawing, pinch-zoom, two-finger pan, a
-  scrollable/touch-friendly toolbar.
+- **Multiplayer canvas** — freehand pen, sticky notes with live collaborative
+  text, rectangles, ellipses; select, drag, resize, reorder, recolor, delete; and
+  per-user undo/redo.
+- **Live presence** — everyone's cursor with name and color, eased and kept
+  aligned at any pan/zoom level.
+- **Conflict-free by construction** — concurrent edits merge deterministically;
+  no locks and no lost work.
+- **Offline-first** — keep drawing with no connection; edits queue locally and a
+  connection badge makes the state (Live / Reconnecting / Offline) explicit.
+- **Shareable rooms** — tokenized invite links add visitors as editors; the owner
+  can regenerate the token to revoke access, and non-members get a "request
+  access" flow the owner can approve.
+- **Room admin** — rename, member list with removal, and soft-delete.
+- **Passwordless auth** — magic-link sign-in with a per-user profile.
+- **Mobile-ready** — pointer-events drawing, pinch-zoom, two-finger pan, and a
+  touch-friendly toolbar.
 
 ---
 
-## Architecture
+## Tech stack & rationale
 
-```
-┌─────────── Browser (Next.js client) ───────────┐
-│  Canvas (HTML5 Canvas, world ↔ screen tx)      │
-│  Yjs Doc  ◄─►  y-indexeddb (offline cache)     │
-│      ▲                                         │
-│      │ updates (Uint8Array, batched)           │
-│      ▼                                         │
-│  SupabaseProvider ──── broadcast ────►──┐      │
-│  Presence channel (cursor x,y, name)    │      │
-│  performance marks (hot-path timing)    │      │
-└─────────────────────────────────────────┼──────┘
-                                          │
-                       ┌──────────────────▼───────────────────┐
-                       │  Supabase                            │
-                       │  - Realtime (broadcast + presence)   │
-                       │  - Auth (magic link)                 │
-                       │  - Postgres: profiles, rooms,        │
-                       │    room_members, room_snapshots,     │
-                       │    room_updates, room_access_requests│
-                       │  - Edge Function: compact-room       │
-                       └──────────────────────────────────────┘
-```
+| Area | Choice | Why |
+|---|---|---|
+| Sync | **Yjs (CRDT)** + y-indexeddb | Convergence guarantees remove server merge logic and make offline trivial |
+| Backend | **Supabase** | Postgres + Realtime + Auth + Edge Functions in one platform, no custom server |
+| Authz | **Row-Level Security** | The security boundary lives in the database, so the client can talk to it directly |
+| Framework | **Next.js 16 / React 19** | App Router, server actions for room mutations, edge middleware for session refresh |
+| Rendering | **HTML5 Canvas** | Direct imperative drawing with an explicit world↔screen transform for pan/zoom |
+| Styling | **Tailwind v4** + Radix primitives | Fast, consistent UI with accessible building blocks |
 
-- **Yjs is the source of truth** for shape state; the canvas is a pure renderer
-  over `ydoc.getMap('shapes')`. Each shape is a nested `Y.Map`, so position is
-  LWW per field and a note's `Y.Text` stays live for character-wise merging.
-- **The Realtime channel is a dumb pipe** carrying opaque Yjs binary updates —
-  the server stays document-agnostic and clients converge purely through CRDT
-  semantics. A separate presence channel carries cursors so cursor spam never
-  pollutes the doc log.
-- **Persistence**: local updates are appended (debounced, merged) to
-  `room_updates`; new joiners bootstrap from a `room_snapshots` snapshot plus the
-  tail of `room_updates`. The `compact-room` edge function folds the log back
-  into the snapshot when it grows past a threshold (see below).
-
-Key modules: `src/lib/yjs/` (doc, provider, persistence, undo, encoding),
-`src/lib/canvas/` (viewport, render, hit-test, tools), `src/lib/presence/`,
-`src/components/` (Whiteboard, CanvasLayer, Toolbar, PresenceLayer, …).
+Notable modules: `src/lib/yjs/` (doc, provider, persistence, undo, encoding),
+`src/lib/canvas/` (viewport, render, hit-test, tools), `src/lib/presence/`, and
+the `compact-room` edge function under `supabase/functions/`.
 
 ---
 
-## Local setup
+## Running it locally
 
-Prerequisites: Node 20+, pnpm, and a Supabase project.
+Prerequisites: Node 20+, pnpm, and a Supabase project (free tier is fine).
 
 ```bash
 pnpm install
-# create .env.local with the variables in the table below
-pnpm dev                           # http://localhost:3000
+# create .env.local with the variables below
+pnpm dev          # http://localhost:3000
 ```
 
-### Environment (`.env.local`)
+**Environment (`.env.local`):**
 
 | Variable | Required | Purpose |
-| --- | --- | --- |
+|---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Supabase anon key |
-| `NEXT_PUBLIC_SITE_URL` | yes | Used for magic-link redirects + share links |
-| `SUPABASE_SERVICE_ROLE_KEY` | no | Only used by the e2e test; never sent to the browser |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Supabase anon key (client-safe) |
+| `NEXT_PUBLIC_SITE_URL` | yes | Magic-link redirects + share links |
+| `SUPABASE_SERVICE_ROLE_KEY` | no | e2e tests only — never sent to the browser |
 
-The app degrades gracefully without Supabase configured (it shows the marketing
-landing).
+**Database:** apply the migrations in `supabase/migrations/` (SQL editor or
+`supabase db push`) — `0001_init.sql` creates the schema, RLS, and helper
+functions; `0002_compaction.sql` wires the compaction trigger. Then add
+`<site-url>/auth/callback` to **Auth → URL Configuration** in Supabase.
 
-### Database
-
-Apply the migrations in `supabase/migrations/` (SQL editor or `supabase db push`):
-
-1. `0001_init.sql` — schema, RLS, and helper/trigger functions.
-2. `0002_compaction.sql` — the compaction trigger (a no-op until you set the
-   GUCs documented at the top of that file).
-
-In Supabase **Auth → URL Configuration**, add `http://localhost:3000/auth/callback`
-(and your deployed URL) to the allowed redirect URLs.
-
----
-
-## Compaction edge function
-
-`supabase/functions/compact-room/` folds a room's append log into its snapshot so
-bootstrap stays cheap. It's invoked by the `room_updates` after-insert trigger
-once the log crosses the threshold (500 rows), and is idempotent.
-
-```bash
-supabase functions deploy compact-room --no-verify-jwt
-supabase secrets set COMPACTION_SECRET=<a-long-random-string>
-```
-
-Then point the trigger at it (run once, with your own values):
-
-```sql
-alter database postgres
-  set app.compaction_url = 'https://<project-ref>.supabase.co/functions/v1/compact-room';
-alter database postgres
-  set app.compaction_secret = '<the COMPACTION_SECRET you just set>';
-```
-
----
-
-## Observability
-
-- **Performance marks** (`src/lib/observability/perf.ts`) wrap the two hot paths —
-  CRDT apply (`crdt-apply`) and canvas render (`canvas-render`) — using the
-  standard User Timing API, so they show up in the DevTools Performance panel.
+Without Supabase configured, the app still boots and serves the local-only
+whiteboard.
 
 ---
 
 ## Testing
 
 ```bash
-pnpm test         # Vitest unit suite (viewport, hit-test, tools, render, shapes)
-pnpm test:e2e     # Playwright two-browser realtime sync test
+pnpm test         # Vitest — viewport, hit-test, tools, render, shapes
+pnpm test:e2e     # Playwright — two-browser realtime sync
 pnpm typecheck    # tsc --noEmit
 pnpm lint         # eslint
 ```
 
-The Vitest suite covers the pure canvas/geometry layer and runs with no external
-services.
-
-The Playwright test (`e2e/sync.spec.ts`) opens the same room in two separately
-authenticated browser contexts, draws a rectangle in one, and asserts it appears
-in the other. Because auth is magic-link only, `e2e/global-setup.ts` injects
-sessions using the **service-role key**: it provisions two throwaway users + a
-fresh room, signs them in through `@supabase/ssr` (so the cookies are formatted
-exactly as the app expects), and saves them as Playwright storage states. To run
-it for real:
-
-```bash
-pnpm exec playwright install chromium     # one-time
-# set SUPABASE_SERVICE_ROLE_KEY in .env.local
-pnpm test:e2e
-```
-
-Without the service-role key the test **skips cleanly** instead of failing.
+The unit suite covers the pure geometry/canvas layer with no external services.
+The e2e test opens one room in two separately authenticated browser contexts,
+draws in one, and asserts it appears in the other — injecting sessions via the
+service-role key, or skipping cleanly when that key is absent.
 
 ---
 
-## Known limitations
+## Trade-offs
 
-These are deliberate v1 trade-offs:
+Deliberate v1 decisions, stated plainly:
 
-- **Z-order on concurrent reorder is LWW**, not collision-free. Two simultaneous
-  "bring to front" actions may settle the wrong way.
-- **The drawing surface is not screen-reader accessible.** The app chrome
-  (toolbar, dialogs, shortcuts) is keyboard- and a11y-friendly; the canvas itself
-  is acknowledged as a visual tool.
-- **Scale target is ~25 users/room.** Beyond that, expect Supabase free-tier
-  message-rate throttling.
-- **No image paste / PNG export / multi-select / grouping** in v1.
+- **Trust model is "any room member is trusted."** Realtime broadcasts aren't
+  server-validated, so the system trusts members not to broadcast malicious doc
+  mutations. There's no server authority over content.
+- **Durability is tied to the originating client's flush.** Peers don't re-persist
+  updates they receive (to avoid N redundant writes), so a brand-new edit is fully
+  durable in Postgres only after its author's short debounced flush — it lives in
+  peers' live docs and the author's IndexedDB in the meantime.
+- **Broadcast fan-out doesn't scale to large rooms.** Every client sends to every
+  peer; comfortable for small teams (~25 users/room on the free tier), not for
+  hundreds of concurrent editors.
+- **Per-field last-writer-wins** for geometry, color, and z-order — two
+  simultaneous "bring to front" actions may settle the wrong way. Note *text*
+  avoids this entirely via `Y.Text`.
+- **Scope:** magic-link-only auth, light theme only, and no image paste / export /
+  multi-select / grouping in v1.
 
 ---
 
 ## Scripts
 
 | Script | Description |
-| --- | --- |
-| `pnpm dev` | Start the dev server |
+|---|---|
+| `pnpm dev` | Start the dev server (Turbopack) |
 | `pnpm build` | Production build |
 | `pnpm start` | Serve the production build |
 | `pnpm test` | Vitest unit tests |
 | `pnpm test:e2e` | Playwright sync e2e |
-| `pnpm typecheck` | TypeScript check |
+| `pnpm typecheck` | TypeScript, no emit |
 | `pnpm lint` | ESLint |
