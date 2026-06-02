@@ -43,7 +43,7 @@ next-env.d.ts
 
 # --- SyncSpace: excluded from the repo (per request) ---
 /supabase/
-*.md
+prd.md
 progress.txt
 
 # local tooling/session state (not for a public repo)
