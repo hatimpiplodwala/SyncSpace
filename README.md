@@ -16,9 +16,6 @@ store opaque bytes durably. No locks, no operational transforms on a server, no
 > (Postgres + RLS · Realtime · Auth · Edge Functions) · Yjs CRDT · y-indexeddb ·
 > HTML5 Canvas · Tailwind v4
 
-<!-- Live demo: replace with your deployed Vercel URL -->
-**Live demo:** _deployed on Vercel — add your URL here_
-
 ---
 
 ## Why it's built this way
