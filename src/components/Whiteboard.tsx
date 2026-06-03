@@ -25,6 +25,7 @@ import {
   setColor,
   getShapeType,
 } from "@/lib/yjs/shapes";
+import { isTextTarget } from "@/lib/utils";
 import { CanvasLayer } from "./CanvasLayer";
 import { PresenceLayer } from "./PresenceLayer";
 import { Toolbar } from "./Toolbar";
@@ -291,11 +292,4 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
       />
     </div>
   );
-}
-
-function isTextTarget(target: EventTarget | null): boolean {
-  const el = target as HTMLElement | null;
-  if (!el) return false;
-  const tag = el.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || el.isContentEditable;
 }

@@ -25,7 +25,14 @@ export function CommandPalette({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
+  // Default to ⌘ so SSR and first client render match; correct to Ctrl after mount.
+  const [isMac, setIsMac] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.platform));
+  }, []);
 
   const openPalette = () => {
     setQuery("");
@@ -90,7 +97,7 @@ export function CommandPalette({
       >
         {triggerLabel}
         <kbd className="border border-border px-1 text-[0.625rem] leading-none">
-          ⌘K
+          {isMac ? "⌘K" : "Ctrl K"}
         </kbd>
       </button>
 

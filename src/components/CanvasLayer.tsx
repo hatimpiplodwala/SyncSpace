@@ -18,6 +18,7 @@ import {
 } from "@/lib/canvas/viewport";
 import { type Tool } from "@/lib/canvas/tools";
 import { getShapesMap } from "@/lib/yjs/doc";
+import { isTextTarget } from "@/lib/utils";
 import {
   readAllShapes,
   getNoteText,
@@ -515,11 +516,4 @@ export function CanvasLayer({
 function localPoint(canvas: HTMLCanvasElement, clientX: number, clientY: number) {
   const rect = canvas.getBoundingClientRect();
   return { sx: clientX - rect.left, sy: clientY - rect.top };
-}
-
-function isTextTarget(target: EventTarget | null): boolean {
-  const el = target as HTMLElement | null;
-  if (!el) return false;
-  const tag = el.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || el.isContentEditable;
 }
