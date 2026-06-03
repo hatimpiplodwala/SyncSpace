@@ -31,6 +31,8 @@ export class SupabaseProvider {
   private readonly ignored: Set<unknown>;
   private readonly onStatus?: (status: ProviderStatus) => void;
   private destroyed = false;
+  // Only push over the socket when joined; otherwise realtime-js falls back to REST.
+  private connected = false;
 
   constructor(
     supabase: SupabaseClient,
@@ -44,6 +46,8 @@ export class SupabaseProvider {
     this.ignored = new Set<unknown>([this, ...(opts.ignoreOrigins ?? [])]);
     this.flusher = createUpdateFlusher(supabase, roomId);
     this.broadcast = createBatcher(BROADCAST_INTERVAL_MS, (merged) => {
+      // Persistence is handled separately; peers reconcile via the on-join sync.
+      if (!this.connected) return;
       void this.channel.send({
         type: "broadcast",
         event: "yjs-update",
@@ -82,6 +86,7 @@ export class SupabaseProvider {
     this.channel.subscribe((status) => {
       if (this.destroyed) return;
       if (status === "SUBSCRIBED") {
+        this.connected = true;
         this.onStatus?.("connected");
         // Two-way reconcile on every (re)subscribe: pull peers' newer state, push ours (idempotent).
         void this.channel.send({
@@ -99,6 +104,7 @@ export class SupabaseProvider {
         status === "TIMED_OUT" ||
         status === "CLOSED"
       ) {
+        this.connected = false;
         this.onStatus?.("disconnected");
       }
     });
@@ -122,7 +128,7 @@ export class SupabaseProvider {
   }
 
   private sendSyncStep(svB64: unknown) {
-    if (typeof svB64 !== "string") return;
+    if (typeof svB64 !== "string" || !this.connected) return;
     const diff = Y.encodeStateAsUpdate(this.doc, base64ToBytes(svB64));
     void this.channel.send({
       type: "broadcast",

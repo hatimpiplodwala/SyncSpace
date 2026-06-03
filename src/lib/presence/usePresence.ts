@@ -33,7 +33,11 @@ export function usePresence(roomId: string, me: Me) {
       config: { presence: { key: conn }, broadcast: { self: false } },
     });
 
+    // Only push over the socket when joined; otherwise realtime-js falls back to REST.
+    let joined = false;
+
     const throttle = createThrottle(CURSOR_INTERVAL_MS, (x: number, y: number) => {
+      if (!joined) return;
       void channel.send({
         type: "broadcast",
         event: "cursor",
@@ -69,12 +73,15 @@ export function usePresence(roomId: string, me: Me) {
 
     channel.subscribe((status) => {
       if (status === "SUBSCRIBED") {
+        joined = true;
         void channel.track({
           conn,
           user_id: me.id,
           name: me.name,
           color: me.color,
         } satisfies Meta);
+      } else {
+        joined = false;
       }
     });
 
