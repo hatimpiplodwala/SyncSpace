@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Room } from "@/types/db";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 
 type RoomListItem = Pick<Room, "id" | "name" | "owner_id" | "created_at">;
 
@@ -14,35 +13,48 @@ export function RoomList({
 }) {
   if (rooms.length === 0) {
     return (
-      <Card className="border-dashed bg-card/60 px-6 py-16 text-center shadow-none">
-        <p className="text-sm text-foreground">
-          You don&apos;t have any boards yet.
-        </p>
+      <div className="border border-dashed border-border px-6 py-16 text-center">
+        <p className="font-display text-lg text-foreground">No boards yet</p>
         <p className="mt-1 text-sm text-muted-foreground">
           Create your first board above to get started.
         </p>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <ul className="border-t border-border">
       {rooms.map((room) => {
         const isOwner = room.owner_id === currentUserId;
         return (
-          <li key={room.id}>
-            <Link href={`/r/${room.id}`} className="group block h-full">
-              <Card className="h-full gap-2 p-5 transition-all group-hover:-translate-y-0.5 group-hover:shadow-[var(--shadow-glossy)]">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-semibold text-foreground">{room.name}</h3>
-                  <Badge variant={isOwner ? "default" : "muted"}>
-                    {isOwner ? "Owner" : "Member"}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Created {new Date(room.created_at).toLocaleDateString()}
-                </p>
-              </Card>
+          <li key={room.id} className="border-b border-border">
+            <Link
+              href={`/r/${room.id}`}
+              className="group flex items-center justify-between gap-4 py-4 transition-colors hover:bg-foreground/[0.02]"
+            >
+              <div className="flex min-w-0 items-baseline gap-4 pl-3">
+                <h3 className="truncate font-display text-lg font-medium text-foreground">
+                  {room.name}
+                </h3>
+                <span className="label-mono shrink-0">
+                  {new Date(room.created_at).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+              <div className="flex shrink-0 items-center gap-4 pr-3">
+                <Badge variant={isOwner ? "default" : "outline"}>
+                  {isOwner ? "Owner" : "Member"}
+                </Badge>
+                <span
+                  aria-hidden
+                  className="font-mono text-sm text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
+                >
+                  &rarr;
+                </span>
+              </div>
             </Link>
           </li>
         );

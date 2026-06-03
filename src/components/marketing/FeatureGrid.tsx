@@ -1,5 +1,3 @@
-import { Card } from "@/components/ui/card";
-
 const features = [
   {
     title: "Live presence",
@@ -21,26 +19,36 @@ const features = [
 
 export function FeatureGrid() {
   return (
-    <section className="border-t border-border bg-secondary/40">
-      <div className="mx-auto max-w-5xl px-6 py-24">
-        <p className="text-center text-sm font-medium text-primary">How it works</p>
-        <h2 className="mx-auto mt-3 max-w-xl text-center text-3xl font-bold tracking-tight text-foreground">
-          A focused toolset built on distributed-systems fundamentals
-        </h2>
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map((f) => (
-            <Card
-              key={f.title}
-              className="gap-2 p-6 transition-shadow hover:shadow-[var(--shadow-glossy)]"
-            >
-              <h3 className="text-base font-semibold text-foreground">
-                {f.title}
-              </h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {f.body}
-              </p>
-            </Card>
-          ))}
+    <section className="border-t border-border">
+      <div className="mx-auto max-w-6xl px-6 py-20">
+        <div className="grid gap-10 lg:grid-cols-[1fr_2fr] lg:gap-16">
+          <div className="lg:sticky lg:top-20 lg:self-start">
+            <p className="label-mono">What it does</p>
+            <h2 className="mt-4 font-display text-3xl font-medium leading-tight tracking-tight text-foreground">
+              A focused toolset built on distributed-systems fundamentals.
+            </h2>
+          </div>
+
+          <ol className="border-t border-border">
+            {features.map((f, i) => (
+              <li
+                key={f.title}
+                className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 border-b border-border py-7"
+              >
+                <span className="label-mono pt-1 tabular-nums">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div>
+                  <h3 className="font-display text-xl font-medium text-foreground">
+                    {f.title}
+                  </h3>
+                  <p className="mt-2 max-w-xl leading-relaxed text-muted-foreground">
+                    {f.body}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
     </section>

@@ -11,6 +11,7 @@ import { Hero } from "@/components/marketing/Hero";
 import { FeatureGrid } from "@/components/marketing/FeatureGrid";
 import { Footer } from "@/components/marketing/Footer";
 import { RoomList } from "@/components/RoomList";
+import { DashboardCommands } from "@/components/DashboardCommands";
 import type { Room } from "@/types/db";
 
 export default async function HomePage() {
@@ -36,7 +37,7 @@ export default async function HomePage() {
 
   return (
     <main className="flex-1">
-      <header>
+      <header className="border-b border-border">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <LogoWordmark />
           <UserMenu
@@ -47,17 +48,19 @@ export default async function HomePage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-5xl px-6 py-10">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mx-auto max-w-5xl px-6 py-12">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            <p className="label-mono">Workspace</p>
+            <h1 className="mt-2 font-display text-3xl font-medium tracking-tight text-foreground">
               Your boards
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Create a board, then share the link to collaborate live.
-            </p>
           </div>
-          <form action={createRoom} className="flex gap-2">
+          <div className="flex items-center gap-3">
+            <DashboardCommands
+              boards={rooms.map((r) => ({ id: r.id, name: r.name }))}
+            />
+            <form action={createRoom} className="flex gap-2">
             <label htmlFor="name" className="sr-only">
               Board name
             </label>
@@ -72,7 +75,8 @@ export default async function HomePage() {
             <Button type="submit" size="lg" className="whitespace-nowrap">
               Create board
             </Button>
-          </form>
+            </form>
+          </div>
         </div>
 
         <div className="mt-8">

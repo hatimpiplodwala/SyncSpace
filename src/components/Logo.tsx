@@ -1,4 +1,4 @@
-// SyncSpace logomark: two overlapping rounded squares whose intersection lightens (edits merging).
+// SyncSpace logomark: two overlapping squares whose intersection is inked (edits merging).
 
 import { cn } from "@/lib/utils";
 
@@ -19,45 +19,28 @@ export function Logo({
       aria-label="SyncSpace"
       className={cn("shrink-0", className)}
     >
-      <defs>
-        <linearGradient id="ss-blue" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#3b82f6" />
-          <stop offset="1" stopColor="#2563eb" />
-        </linearGradient>
-        <linearGradient id="ss-sky" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#38bdf8" />
-          <stop offset="1" stopColor="#0ea5e9" />
-        </linearGradient>
-        <clipPath id="ss-back">
-          <rect x="2.5" y="2.5" width="17" height="17" rx="5.5" />
-        </clipPath>
-      </defs>
+      {/* intersection of the two squares, inked in the accent */}
+      <rect x="12.5" y="12.5" width="7" height="7" fill="var(--primary)" />
       <rect
-        x="2.5"
-        y="2.5"
-        width="17"
-        height="17"
-        rx="5.5"
-        fill="url(#ss-blue)"
+        x="3.5"
+        y="3.5"
+        width="16"
+        height="16"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
       />
       <rect
         x="12.5"
         y="12.5"
-        width="17"
-        height="17"
-        rx="5.5"
-        fill="url(#ss-sky)"
+        width="16"
+        height="16"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
       />
-      <g clipPath="url(#ss-back)">
-        <rect
-          x="12.5"
-          y="12.5"
-          width="17"
-          height="17"
-          rx="5.5"
-          fill="#bae6fd"
-        />
-      </g>
     </svg>
   );
 }
@@ -67,11 +50,11 @@ export function LogoWordmark({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 text-lg font-bold tracking-tight text-foreground",
+        "inline-flex items-center gap-2 font-display text-lg font-medium tracking-tight text-foreground",
         className,
       )}
     >
-      <Logo size={26} />
+      <Logo size={20} className="text-foreground" />
       SyncSpace
     </span>
   );

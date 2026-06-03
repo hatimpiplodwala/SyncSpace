@@ -5,13 +5,13 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex w-fit shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium [&>svg]:size-3 [&>svg]:pointer-events-none",
+  "inline-flex w-fit shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-[3px] border px-1.5 py-0.5 font-mono text-[0.625rem] uppercase tracking-[0.12em] [&>svg]:size-3 [&>svg]:pointer-events-none",
   {
     variants: {
       variant: {
-        default: "border-transparent gloss-primary text-primary-foreground",
+        default: "border-transparent gloss-primary",
         secondary: "border-transparent bg-secondary text-secondary-foreground",
-        outline: "border-border bg-card text-foreground",
+        outline: "border-border bg-transparent text-muted-foreground",
         muted: "border-transparent bg-muted text-muted-foreground",
       },
     },

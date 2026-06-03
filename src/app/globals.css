@@ -2,14 +2,16 @@
 @import "tw-animate-css";
 
 /*
-  SyncSpace design system — light-only, true-blue identity (shadcn tokens).
-  Neutrals carry a faint cool-blue tint so the UI reads crisp, not flat gray.
+  SyncSpace design system — "editorial technical".
+  Warm paper ground, near-black ink, a single vermilion accent. Hairline rules
+  over shadows; serif display, grotesque body, monospace for technical labels.
 */
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.3rem;
 
-  --background: oklch(0.991 0.004 255);
+  /* White ground, cool ink */
+  --background: oklch(0.997 0.001 255);
   --foreground: oklch(0.21 0.02 260);
 
   --card: oklch(1 0 0);
@@ -17,7 +19,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.21 0.02 260);
 
-  /* blue #2563eb */
+  /* Blue accent (#2563eb) */
   --primary: oklch(0.546 0.215 263);
   --primary-foreground: oklch(0.985 0.005 255);
 
@@ -33,26 +35,23 @@
   --destructive: oklch(0.58 0.222 27);
   --destructive-foreground: oklch(0.985 0.005 255);
 
-  --border: oklch(0.918 0.012 255);
+  --border: oklch(0.918 0.012 255);      /* cool hairline */
   --input: oklch(0.918 0.012 255);
   --ring: oklch(0.62 0.19 261);
 
-  /* Gloss extras (not standard shadcn tokens). */
-  --primary-from: #3b82f6; /* blue-500 */
-  --primary-to: #2563eb; /* blue-600 */
-  --gradient-primary: linear-gradient(180deg, var(--primary-from), var(--primary-to));
-  --gradient-brand: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  --shadow-soft: 0 1px 2px oklch(0.21 0.02 260 / 0.06),
-    0 8px 24px -8px oklch(0.21 0.02 260 / 0.12);
+  /* Legacy token names kept so existing usages render flat (no gloss). */
+  --gradient-brand: var(--primary);
+  --gradient-primary: var(--primary);
+  --shadow-soft: 0 1px 0 oklch(0.21 0.02 260 / 0.04);
   --shadow-glossy: 0 1px 2px oklch(0.21 0.02 260 / 0.08),
-    0 12px 32px -10px oklch(0.5 0.2 260 / 0.22);
+    0 10px 24px -16px oklch(0.21 0.02 260 / 0.22);
 }
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -77,8 +76,9 @@
   --shadow-soft: var(--shadow-soft);
   --shadow-glossy: var(--shadow-glossy);
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", monospace;
 }
 
 @layer base {
@@ -88,31 +88,46 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
   }
 }
 
 @layer components {
-  /* Glossy primary surface: blue gradient with an inset top highlight. */
+  /* Solid ink fill — replaces the old glossy gradient primary. */
   .gloss-primary {
-    background-image: var(--gradient-primary);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.25),
-      var(--shadow-glossy);
+    background-color: var(--primary);
+    color: var(--primary-foreground);
   }
   .gloss-primary:hover {
-    filter: brightness(1.05);
+    background-color: color-mix(in oklab, var(--primary) 88%, black);
   }
 
-  /* Frosted glass for floating chrome (toolbar, badges, dialogs, hints). */
+  /* Solid paper panel with a hairline border — replaces frosted glass. */
   .glass {
-    background-color: rgb(255 255 255 / 0.72);
-    backdrop-filter: blur(12px) saturate(1.4);
-    border: 1px solid rgb(255 255 255 / 0.6);
+    background-color: color-mix(in oklab, var(--card) 92%, transparent);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--border);
     box-shadow: var(--shadow-glossy);
   }
 
-  /* Hide the scrollbar but keep scrollability (used by the toolbar, which
-     scrolls horizontally on narrow/mobile screens where it can't fit one row). */
+  /* Monospace technical eyebrow/label. */
+  .label-mono {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+
+  /* Faint engineering grid, used as a background texture. */
+  .grid-paper {
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;

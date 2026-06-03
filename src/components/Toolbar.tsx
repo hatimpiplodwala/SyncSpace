@@ -82,7 +82,7 @@ export function Toolbar({
   onShowShortcuts,
 }: Props) {
   return (
-    <div className="glass no-scrollbar pointer-events-auto absolute left-1/2 top-4 z-20 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 items-center gap-1 overflow-x-auto rounded-xl p-1.5 [&>*]:shrink-0">
+    <div className="glass no-scrollbar pointer-events-auto absolute left-1/2 top-4 z-20 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 items-center gap-1 overflow-x-auto rounded-[4px] p-1 [&>*]:shrink-0">
       {/* Tools */}
       <div className="flex items-center gap-1">
         {TOOLS.map((t) => {
@@ -224,9 +224,9 @@ function ChromeButton({
           disabled={disabled}
           aria-pressed={active}
           className={cn(
-            "flex size-9 items-center justify-center rounded-lg outline-none transition focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-30",
+            "flex size-9 items-center justify-center rounded-[3px] outline-none transition focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-30",
             active
-              ? "gloss-primary text-primary-foreground"
+              ? "gloss-primary"
               : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground",
           )}
           {...rest}

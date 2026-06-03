@@ -9,15 +9,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "gloss-primary text-primary-foreground hover:-translate-y-px active:translate-y-0",
+        default: "gloss-primary",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-[var(--shadow-soft)] hover:bg-secondary/70",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/70",
         outline:
-          "border bg-card text-foreground shadow-[var(--shadow-soft)] hover:bg-accent hover:text-accent-foreground",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+          "border border-foreground/20 bg-transparent text-foreground hover:bg-foreground/5",
+        ghost: "hover:bg-foreground/5 hover:text-foreground",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-[var(--shadow-soft)] hover:bg-destructive/90 focus-visible:ring-destructive/30",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive/30",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
@@ -48,6 +47,7 @@ function Button({
   return (
     <Comp
       data-slot="button"
+      suppressHydrationWarning
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
