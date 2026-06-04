@@ -146,51 +146,6 @@ the `compact-room` edge function under `supabase/functions/`.
 
 ---
 
-## Running it locally
-
-Prerequisites: Node 20+, pnpm, and a Supabase project (free tier is fine).
-
-```bash
-pnpm install
-# create .env.local with the variables below
-pnpm dev          # http://localhost:3000
-```
-
-**Environment (`.env.local`):**
-
-| Variable | Required | Purpose |
-|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Supabase anon key (client-safe) |
-| `NEXT_PUBLIC_SITE_URL` | yes | Magic-link redirects + share links |
-| `SUPABASE_SERVICE_ROLE_KEY` | no | e2e tests only — never sent to the browser |
-
-**Database:** apply the migrations in `supabase/migrations/` (SQL editor or
-`supabase db push`) — `0001_init.sql` creates the schema, RLS, and helper
-functions; `0002_compaction.sql` wires the compaction trigger. Then add
-`<site-url>/auth/callback` to **Auth → URL Configuration** in Supabase.
-
-Without Supabase configured, the app still boots and serves the local-only
-whiteboard.
-
----
-
-## Testing
-
-```bash
-pnpm test         # Vitest — viewport, hit-test, tools, render, shapes
-pnpm test:e2e     # Playwright — two-browser realtime sync
-pnpm typecheck    # tsc --noEmit
-pnpm lint         # eslint
-```
-
-The unit suite covers the pure geometry/canvas layer with no external services.
-The e2e test opens one room in two separately authenticated browser contexts,
-draws in one, and asserts it appears in the other — injecting sessions via the
-service-role key, or skipping cleanly when that key is absent.
-
----
-
 ## Trade-offs
 
 Deliberate v1 decisions, stated plainly:
@@ -213,14 +168,17 @@ Deliberate v1 decisions, stated plainly:
 
 ---
 
-## Scripts
+## Setup
 
-| Script | Description |
-|---|---|
-| `pnpm dev` | Start the dev server (Turbopack) |
-| `pnpm build` | Production build |
-| `pnpm start` | Serve the production build |
-| `pnpm test` | Vitest unit tests |
-| `pnpm test:e2e` | Playwright sync e2e |
-| `pnpm typecheck` | TypeScript, no emit |
-| `pnpm lint` | ESLint |
+Node 20+, pnpm, and a Supabase project.
+
+```bash
+pnpm install && pnpm dev   # http://localhost:3000
+```
+
+`.env.local` needs `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+and `NEXT_PUBLIC_SITE_URL`. Apply `supabase/migrations/*.sql`, then add
+`<site-url>/auth/callback` under **Supabase → Auth → URL Configuration**.
+Without Supabase configured, the app still boots as a local-only whiteboard.
+
+`pnpm test` (Vitest) · `pnpm test:e2e` (Playwright, needs `SUPABASE_SERVICE_ROLE_KEY`) · `pnpm typecheck` · `pnpm lint`.
