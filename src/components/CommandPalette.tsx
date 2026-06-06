@@ -17,10 +17,13 @@ export function CommandPalette({
   commands,
   placeholder = "Search or jump to…",
   triggerLabel = "Search",
+  showTrigger = true,
 }: {
   commands: Command[];
   placeholder?: string;
   triggerLabel?: string;
+  /** When false, only the global ⌘K shortcut opens the palette (no visible button). */
+  showTrigger?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -90,16 +93,19 @@ export function CommandPalette({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={openPalette}
-        className="inline-flex items-center gap-2 border border-border bg-card px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
-      >
-        {triggerLabel}
-        <kbd className="border border-border px-1 text-[0.625rem] leading-none">
-          {isMac ? "⌘K" : "Ctrl K"}
-        </kbd>
-      </button>
+      {showTrigger && (
+        <button
+          type="button"
+          onClick={openPalette}
+          suppressHydrationWarning
+          className="inline-flex items-center gap-2 border border-border bg-card px-3 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {triggerLabel}
+          <kbd className="border border-border px-1 text-[0.625rem] leading-none">
+            {isMac ? "⌘K" : "Ctrl K"}
+          </kbd>
+        </button>
+      )}
 
       {open && (
         <div
@@ -120,6 +126,7 @@ export function CommandPalette({
                 setQuery(e.target.value);
                 setActive(0);
               }}
+              suppressHydrationWarning
               placeholder={placeholder}
               className="w-full border-b border-border bg-transparent px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground"
               onKeyDown={(e) => {

@@ -1,12 +1,14 @@
 // Palettes: fixed shape colors, soft note colors, and per-user cursor/avatar hues.
 
+// Editorial shape palette: deeper -600 tones aligned with the primary blue (#2563eb).
+// Existing docs keep their stored hex; this only changes new shapes' defaults.
 export const SHAPE_COLORS = {
   black: "#111827",
-  red: "#ef4444",
-  blue: "#3b82f6",
-  green: "#22c55e",
-  yellow: "#eab308",
-  purple: "#a855f7",
+  red: "#dc2626",
+  blue: "#2563eb",
+  green: "#16a34a",
+  yellow: "#ca8a04",
+  purple: "#7c3aed",
 } as const;
 
 export type ShapeColorName = keyof typeof SHAPE_COLORS;

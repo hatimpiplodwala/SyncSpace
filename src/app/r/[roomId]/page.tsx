@@ -12,6 +12,7 @@ import { ShareDialog } from "@/components/ShareDialog";
 import { AccessRequestsTray } from "@/components/AccessRequestsTray";
 import { RoomSettingsDialog } from "@/components/RoomSettingsDialog";
 import { RequestAccessButton } from "@/components/RequestAccessButton";
+import { RoomCommands } from "@/components/RoomCommands";
 
 type RoomRow = Pick<
   Room,
@@ -119,13 +120,14 @@ export default async function RoomPage({
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/"
+            aria-label="Back to boards"
             className="flex shrink-0 items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
           >
             <ArrowLeft className="size-4" />
-            Boards
+            <span className="hidden sm:inline">Boards</span>
           </Link>
-          <span className="h-5 w-px shrink-0 bg-border" aria-hidden />
-          <Logo size={20} className="shrink-0" />
+          <span className="hidden h-5 w-px shrink-0 bg-border sm:inline-block" aria-hidden />
+          <Logo size={20} className="hidden shrink-0 sm:block" />
           <h1 className="truncate font-semibold text-foreground">
             {room.name}
           </h1>
@@ -150,6 +152,11 @@ export default async function RoomPage({
           name: profile.display_name,
           color: profile.avatar_color || userColor(user.id),
         }}
+      />
+      <RoomCommands
+        roomId={room.id}
+        inviteToken={room.invite_token}
+        isOwner={isOwner}
       />
     </main>
   );

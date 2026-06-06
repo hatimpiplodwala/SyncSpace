@@ -1,8 +1,9 @@
 "use client";
 
-// Builds command-palette entries for the dashboard: jump to any board, or create one.
+// Builds command-palette entries for the dashboard: jump to any board, create one, or sign out.
 
 import { useRouter } from "next/navigation";
+import { signOut } from "@/app/actions";
 import { CommandPalette, type Command } from "./CommandPalette";
 
 type BoardRef = { id: string; name: string };
@@ -30,6 +31,13 @@ export function DashboardCommands({ boards }: { boards: BoardRef[] }) {
         run: () => router.push(`/r/${b.id}`),
       }),
     ),
+    {
+      id: "sign-out",
+      label: "Sign out",
+      group: "Account",
+      keywords: "signout logout exit",
+      run: () => void signOut(),
+    },
   ];
 
   return <CommandPalette commands={commands} triggerLabel="Search boards" />;

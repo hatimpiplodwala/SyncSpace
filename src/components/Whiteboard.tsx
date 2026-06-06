@@ -31,6 +31,9 @@ import { PresenceLayer } from "./PresenceLayer";
 import { Toolbar } from "./Toolbar";
 import { ConnectionBadge, type ConnectionStatus } from "./ConnectionBadge";
 import { ShortcutsCheatSheet } from "./ShortcutsCheatSheet";
+import { StatusLine } from "./StatusLine";
+import { ZoomControls, type CanvasControls } from "./ZoomControls";
+import { ToolWheel } from "./ToolWheel";
 
 type RoomState = { doc: Y.Doc; undo: Y.UndoManager };
 
@@ -59,8 +62,37 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
   const [strokeWidth, setStrokeWidth] = useState(4);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [isEmpty, setIsEmpty] = useState(true);
+  const [shapeCount, setShapeCount] = useState(0);
+  const isEmpty = shapeCount === 0;
   const [hintDismissed, setHintDismissed] = useState(false);
+  // Only re-render the status line when scale actually changes, not on every pan.
+  const [scale, setScale] = useState(1);
+  const scaleRef = useRef(1);
+  // Imperative handle into CanvasLayer for the zoom-pill controls.
+  const canvasControlsRef = useRef<CanvasControls | null>(null);
+  // Hover-scrub color preview on the current selection.
+  const [previewColor, setPreviewColor] = useState<string | null>(null);
+  // Radial tool picker invoked by a canvas long-press on touch.
+  const [wheelAt, setWheelAt] = useState<{ x: number; y: number } | null>(null);
+  // Stable so the CanvasLayer touch effect doesn't re-create (and lose the in-flight long-press timer) on every Whiteboard re-render.
+  const handleShowToolWheel = useCallback(
+    (x: number, y: number) => setWheelAt({ x, y }),
+    [],
+  );
+  // Touch long-press label hint (Toolbar's tooltips don't fire on touch).
+  const [touchHint, setTouchHint] = useState<string | null>(null);
+  const touchHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showTouchHint = useCallback((label: string) => {
+    setTouchHint(label);
+    if (touchHintTimerRef.current) clearTimeout(touchHintTimerRef.current);
+    touchHintTimerRef.current = setTimeout(() => setTouchHint(null), 1500);
+  }, []);
+  useEffect(
+    () => () => {
+      if (touchHintTimerRef.current) clearTimeout(touchHintTimerRef.current);
+    },
+    [],
+  );
 
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
@@ -70,6 +102,10 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
   const viewportRef = useRef<Viewport>(initialViewport());
   const handleViewportChange = useCallback((vp: Viewport) => {
     viewportRef.current = vp;
+    if (vp.scale !== scaleRef.current) {
+      scaleRef.current = vp.scale;
+      setScale(vp.scale);
+    }
   }, []);
   const handleCursorMove = useCallback(
     (w: Point | null) => {
@@ -100,7 +136,7 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
 
     const shapesMap = getShapesMap(rd.doc);
     const refresh = () => {
-      setIsEmpty(shapesMap.size === 0);
+      setShapeCount(shapesMap.size);
       setCanUndo(undo.undoStack.length > 0);
       setCanRedo(undo.redoStack.length > 0);
     };
@@ -234,6 +270,9 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
           onToolChange={setTool}
           onViewportChange={handleViewportChange}
           onCursorMove={handleCursorMove}
+          controlsRef={canvasControlsRef}
+          previewColor={previewColor}
+          onShowToolWheel={handleShowToolWheel}
         />
       )}
 
@@ -264,21 +303,87 @@ export function Whiteboard({ roomId, me }: { roomId: string; me: Me }) {
         onUndo={handleUndo}
         onRedo={handleRedo}
         onShowShortcuts={() => setShowShortcuts(true)}
+        onPreviewColor={setPreviewColor}
+        onLongPressLabel={showTouchHint}
       />
 
       <ConnectionBadge status={status} />
+      <StatusLine
+        scale={scale}
+        shapeCount={shapeCount}
+        peerCount={peers.length}
+        status={status}
+      />
+      <ZoomControls scale={scale} controlsRef={canvasControlsRef} />
+
+      {wheelAt && (
+        <ToolWheel
+          position={wheelAt}
+          active={tool}
+          onSelect={(t) => {
+            setTool(t);
+            setWheelAt(null);
+          }}
+          onDismiss={() => setWheelAt(null)}
+        />
+      )}
+
+      {/* Touch long-press hint — sits above the bottom toolbar on mobile, beside the rail on laptop. */}
+      {touchHint && (
+        <div
+          role="status"
+          className="pointer-events-none absolute z-30 bottom-[calc(env(safe-area-inset-bottom,0px)+5rem)] left-1/2 -translate-x-1/2 md:bottom-auto md:left-20 md:top-1/2 md:-translate-y-1/2 md:translate-x-0"
+        >
+          <span className="glass label-mono rounded-[4px] px-3 py-1.5">
+            {touchHint}
+          </span>
+        </div>
+      )}
+
+      {/* Presence — avatar stack at top-right. Cursor name labels are dropped entirely;
+          colors here are the only identifier needed. Hover an avatar to see the name. */}
+      {peers.length > 0 && (
+        <div
+          aria-label="People in this room"
+          className="pointer-events-auto absolute right-4 top-4 z-20 flex -space-x-2"
+        >
+          {peers.slice(0, 5).map((p) => (
+            <span
+              key={p.conn}
+              title={p.name}
+              style={{ backgroundColor: p.color }}
+              className="inline-flex size-7 items-center justify-center rounded-full border-2 border-card text-[10px] font-semibold text-white shadow-[var(--shadow-soft)]"
+            >
+              {p.name.charAt(0).toUpperCase()}
+            </span>
+          ))}
+          {peers.length > 5 && (
+            <span className="label-mono inline-flex size-7 items-center justify-center rounded-full border-2 border-card bg-muted text-muted-foreground">
+              +{peers.length - 5}
+            </span>
+          )}
+        </div>
+      )}
 
       {isEmpty && !hintDismissed && status !== "loading" && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-          <div className="glass pointer-events-auto max-w-xs rounded-2xl px-5 py-4 text-center">
-            <p className="text-sm text-foreground/80">
-              Pick a tool above and start drawing. Everything is saved to this
-              device automatically.
+          <div className="glass pointer-events-auto max-w-sm rounded-[4px] px-6 py-5 text-center">
+            <p className="label-mono">fig.00 — empty board</p>
+            <p className="mt-3 font-display text-lg leading-snug text-foreground">
+              Start with{" "}
+              <em className="not-italic font-medium text-primary">P</em> for
+              pen,{" "}
+              <em className="not-italic font-medium text-primary">V</em> to
+              select.
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Everything is saved to this device automatically.
             </p>
             <button
               type="button"
               onClick={() => setHintDismissed(true)}
-              className="mt-3 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+              suppressHydrationWarning
+              className="label-mono mt-4 transition hover:text-foreground"
             >
               Got it
             </button>

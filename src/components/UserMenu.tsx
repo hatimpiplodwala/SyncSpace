@@ -44,7 +44,7 @@ export function UserMenu({
         <DropdownMenuSeparator />
         <form action={signOutAction}>
           <DropdownMenuItem variant="destructive" asChild>
-            <button type="submit" className="w-full">
+            <button type="submit" suppressHydrationWarning className="w-full">
               <LogOut className="size-4" />
               Sign out
             </button>

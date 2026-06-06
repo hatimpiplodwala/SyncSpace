@@ -76,22 +76,21 @@ export function RoomSettingsDialog({
   return (
     <Dialog onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" aria-label="Board settings">
           <Settings className="size-4" />
-          Settings
+          <span className="hidden sm:inline">Settings</span>
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Board settings</DialogTitle>
+      <DialogContent className="rounded-[4px] gap-0 p-0">
+        <DialogHeader className="border-b border-border px-6 pb-4 pt-5">
+          <DialogTitle className="font-display text-xl font-medium tracking-tight">
+            Board settings
+          </DialogTitle>
         </DialogHeader>
 
         {/* Rename */}
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="room-name"
-            className="text-sm font-medium text-foreground"
-          >
+        <section className="flex flex-col gap-2 px-6 py-4">
+          <label htmlFor="room-name" className="label-mono">
             Name
           </label>
           <div className="flex gap-2">
@@ -109,11 +108,11 @@ export function RoomSettingsDialog({
               Save
             </Button>
           </div>
-        </div>
+        </section>
 
         {/* Members */}
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-foreground">Members</span>
+        <section className="flex flex-col gap-2 border-t border-border px-6 py-4">
+          <p className="label-mono">Members</p>
           {members === null ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
           ) : (
@@ -152,50 +151,57 @@ export function RoomSettingsDialog({
               ))}
             </ul>
           )}
-        </div>
+        </section>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && (
+          <p className="border-t border-border px-6 py-3 text-sm text-destructive">
+            {error}
+          </p>
+        )}
 
         {/* Danger zone */}
-        <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
-          <p className="text-xs text-muted-foreground">
-            Deleting hides this board for everyone.
-          </p>
-          {confirmDelete ? (
-            <div className="flex gap-2">
+        <section className="flex flex-col gap-2 border-t border-border px-6 py-4">
+          <p className="label-mono text-destructive">Danger zone</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              Deleting hides this board for everyone.
+            </p>
+            {confirmDelete ? (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setConfirmDelete(false)}
+                  disabled={pending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={remove}
+                  disabled={pending}
+                >
+                  <Trash2 className="size-4" />
+                  Delete
+                </Button>
+              </div>
+            ) : (
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                onClick={() => setConfirmDelete(false)}
-                disabled={pending}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={remove}
-                disabled={pending}
+                className="text-destructive hover:bg-destructive/10"
+                onClick={() => setConfirmDelete(true)}
               >
                 <Trash2 className="size-4" />
-                Delete
+                Delete board
               </Button>
-            </div>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="text-destructive hover:bg-destructive/10"
-              onClick={() => setConfirmDelete(true)}
-            >
-              <Trash2 className="size-4" />
-              Delete board
-            </Button>
-          )}
-        </div>
+            )}
+          </div>
+        </section>
       </DialogContent>
     </Dialog>
   );

@@ -55,14 +55,14 @@ export function PresenceLayer({ peers, buffer, viewportRef }: Props) {
           className="absolute left-0 top-0 will-change-transform"
           style={{ opacity: 0 }}
         >
-          <CursorGlyph color={p.color} name={p.name} />
+          <CursorGlyph color={p.color} />
         </div>
       ))}
     </div>
   );
 }
 
-function CursorGlyph({ color, name }: { color: string; name: string }) {
+function CursorGlyph({ color }: { color: string }) {
   return (
     <div className="relative">
       {/* Tip sits at the translate origin (0,0). */}
@@ -82,12 +82,8 @@ function CursorGlyph({ color, name }: { color: string; name: string }) {
           strokeLinejoin="round"
         />
       </svg>
-      <span
-        className="absolute left-[14px] top-[16px] whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium text-white shadow-sm"
-        style={{ backgroundColor: color }}
-      >
-        {name}
-      </span>
+      {/* Name pills removed (#10) — identification happens via the avatar stack
+          at the top-right of the canvas. Color alone identifies the cursor here. */}
     </div>
   );
 }

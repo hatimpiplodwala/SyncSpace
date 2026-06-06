@@ -59,40 +59,48 @@ export function ShareDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" aria-label="Share board">
           <Link2 className="size-4" />
-          Share
+          <span className="hidden sm:inline">Share</span>
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Share this board</DialogTitle>
+      <DialogContent className="rounded-[4px] gap-0 p-0">
+        <DialogHeader className="border-b border-border px-6 pb-4 pt-5">
+          <DialogTitle className="font-display text-xl font-medium tracking-tight">
+            Share this board
+          </DialogTitle>
           <DialogDescription>
             Anyone signed in who opens this link joins as an editor.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center gap-2">
-          <Input readOnly value={url} aria-label="Invite link" />
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={copy}
-            aria-label="Copy link"
-          >
-            {copied ? (
-              <Check className="size-4 text-primary" />
-            ) : (
-              <Copy className="size-4" />
-            )}
-          </Button>
+        <div className="flex flex-col gap-2 px-6 py-4">
+          <p className="label-mono">Invite link</p>
+          <div className="flex items-center gap-2">
+            <Input readOnly value={url} aria-label="Invite link" />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={copy}
+              aria-label="Copy link"
+            >
+              {copied ? (
+                <Check className="size-4 text-primary" />
+              ) : (
+                <Copy className="size-4" />
+              )}
+            </Button>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs text-muted-foreground">
-            Regenerating makes the current link stop working.
-          </p>
+        <div className="flex items-center justify-between gap-3 border-t border-border px-6 py-4">
+          <div className="flex flex-col gap-1">
+            <p className="label-mono">Regenerate</p>
+            <p className="text-xs text-muted-foreground">
+              The current link stops working.
+            </p>
+          </div>
           <Button
             type="button"
             variant="ghost"
@@ -105,7 +113,11 @@ export function ShareDialog({
           </Button>
         </div>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && (
+          <p className="border-t border-border px-6 py-3 text-sm text-destructive">
+            {error}
+          </p>
+        )}
       </DialogContent>
     </Dialog>
   );

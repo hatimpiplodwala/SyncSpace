@@ -91,9 +91,11 @@ export function StickyNoteEditor({
         width: rect.w,
         height: rect.h,
         backgroundColor: color,
-        padding: 12 * scale,
-        fontSize: 15 * scale,
-        lineHeight: `${20 * scale}px`,
+        // Floor padding/font so the editor stays usable when zoomed out;
+        // breaks strict WYSIWYG, but unreadable text is worse than a wrap mismatch.
+        padding: Math.max(8, 12 * scale),
+        fontSize: Math.max(14, 15 * scale),
+        lineHeight: `${Math.max(18, 20 * scale)}px`,
         fontFamily: "ui-sans-serif, system-ui, sans-serif",
       }}
     />

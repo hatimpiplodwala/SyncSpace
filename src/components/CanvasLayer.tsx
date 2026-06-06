@@ -15,7 +15,9 @@ import {
   worldToScreen,
   pan,
   zoomAt,
+  clampScale,
 } from "@/lib/canvas/viewport";
+import type { CanvasControls } from "./ZoomControls";
 import { type Tool } from "@/lib/canvas/tools";
 import { getShapesMap } from "@/lib/yjs/doc";
 import { isTextTarget } from "@/lib/utils";
@@ -46,6 +48,12 @@ type Props = {
   onViewportChange?: (vp: Viewport) => void;
   /** Report the local cursor in world coords (null when it leaves the canvas). */
   onCursorMove?: (world: Point | null) => void;
+  /** Optional out-param: filled with imperative viewport controls (zoom, fit). */
+  controlsRef?: React.RefObject<CanvasControls | null>;
+  /** Hex to preview on the selected shape (hover-scrub from the swatches). */
+  previewColor?: string | null;
+  /** Touch long-press on the canvas fires this with canvas-relative coords. */
+  onShowToolWheel?: (x: number, y: number) => void;
 };
 
 // Active interaction. Only one runs at a time (multi-touch becomes "pinch").
@@ -69,6 +77,9 @@ export function CanvasLayer({
   onToolChange,
   onViewportChange,
   onCursorMove,
+  controlsRef,
+  previewColor,
+  onShowToolWheel,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -108,12 +119,78 @@ export function CanvasLayer({
     }
   }, []);
 
+  // Expose imperative viewport controls (used by ZoomControls).
+  useEffect(() => {
+    if (!controlsRef) return;
+    const center = () => {
+      const { w, h } = sizeRef.current;
+      return { x: w / 2, y: h / 2 };
+    };
+    controlsRef.current = {
+      zoomIn: () => {
+        const c = center();
+        setViewportSynced(zoomAt(viewportRef.current, 1.2, c.x, c.y));
+      },
+      zoomOut: () => {
+        const c = center();
+        setViewportSynced(zoomAt(viewportRef.current, 1 / 1.2, c.x, c.y));
+      },
+      resetZoom: () => setViewportSynced(initialViewport()),
+      fitToContent: () => {
+        const shapes = readAllShapes(getShapesMap(doc));
+        const { w: vw, h: vh } = sizeRef.current;
+        if (shapes.length === 0 || vw === 0 || vh === 0) {
+          setViewportSynced(initialViewport());
+          return;
+        }
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+        for (const s of shapes) {
+          const b = shapeBounds(s);
+          if (b.x < minX) minX = b.x;
+          if (b.y < minY) minY = b.y;
+          if (b.x + b.w > maxX) maxX = b.x + b.w;
+          if (b.y + b.h > maxY) maxY = b.y + b.h;
+        }
+        const bw = Math.max(1, maxX - minX);
+        const bh = Math.max(1, maxY - minY);
+        const padding = 80;
+        const scale = clampScale(
+          Math.min((vw - 2 * padding) / bw, (vh - 2 * padding) / bh, 1),
+        );
+        const cx = (minX + maxX) / 2;
+        const cy = (minY + maxY) / 2;
+        setViewportSynced({
+          scale,
+          offsetX: vw / 2 - cx * scale,
+          offsetY: vh / 2 - cy * scale,
+        });
+      },
+    };
+    const ref = controlsRef;
+    return () => {
+      ref.current = null;
+    };
+  }, [controlsRef, setViewportSynced, doc]);
+
   // --- drawing --------------------------------------------------------------
   const draw = useCallback(() => {
     const ctx = ctxRef.current;
     if (!ctx) return;
     const { w, h, dpr } = sizeRef.current;
-    const shapes = readAllShapes(getShapesMap(doc));
+    let shapes = readAllShapes(getShapesMap(doc));
+    // Hover-scrub: swap the selected shape's color/stroke for the previewed hex.
+    if (previewColor && selectedId) {
+      shapes = shapes.map((s) => {
+        if (s.id !== selectedId) return s;
+        if (s.type === "rect" || s.type === "ellipse") {
+          return { ...s, stroke: previewColor };
+        }
+        return { ...s, color: previewColor };
+      });
+    }
     timed("canvas-render", () =>
       render(ctx, shapes, viewportRef.current, {
         width: w,
@@ -124,7 +201,7 @@ export function CanvasLayer({
         hideTextForId: editingId,
       }),
     );
-  }, [doc, selectedId, editingId]);
+  }, [doc, selectedId, editingId, previewColor]);
 
   // Keep the rAF callback pointing at the freshest draw closure.
   useEffect(() => {
@@ -142,7 +219,7 @@ export function CanvasLayer({
   // Redraw whenever React-owned inputs change.
   useEffect(() => {
     scheduleDraw();
-  }, [viewport, selectedId, editingId, scheduleDraw]);
+  }, [viewport, selectedId, editingId, previewColor, scheduleDraw]);
 
   // --- canvas sizing (DPR aware) -------------------------------------------
   useEffect(() => {
@@ -184,6 +261,80 @@ export function CanvasLayer({
     shapesMap.observeDeep(onChange);
     return () => shapesMap.unobserveDeep(onChange);
   }, [doc, scheduleDraw]);
+
+  // --- touch long-press → tool wheel ---------------------------------------
+  // Native touch listeners run alongside the React pointer gesture machine; on long-press
+  // we kill the in-flight gesture so a held finger doesn't also draw a shape.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !onShowToolWheel) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let start: { x: number; y: number } | null = null;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        return;
+      }
+      const t = e.touches[0];
+      start = { x: t.clientX, y: t.clientY };
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        // Release any pointers the React handler captured for this touch —
+        // otherwise the same finger's pointermove/pointerup keeps routing to the
+        // canvas instead of the newly-rendered wheel buttons, breaking hold-and-slide.
+        for (const id of pointersRef.current.keys()) {
+          try {
+            canvas.releasePointerCapture(id);
+          } catch {
+            // already released
+          }
+        }
+        pointersRef.current.clear();
+        // Abort any React-side gesture so the hold doesn't keep extending a preview.
+        gestureRef.current = { kind: "none" };
+        previewRef.current = null;
+        scheduleDraw();
+        if (start) {
+          const rect = canvas.getBoundingClientRect();
+          onShowToolWheel(start.x - rect.left, start.y - rect.top);
+        }
+      }, 500);
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!timer || !start || e.touches.length !== 1) return;
+      const t = e.touches[0];
+      const dx = t.clientX - start.x;
+      const dy = t.clientY - start.y;
+      // 10px slop — anything more is a draw/pan, not a hold.
+      if (dx * dx + dy * dy > 100) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+    const onTouchEnd = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    canvas.addEventListener("touchstart", onTouchStart, { passive: true });
+    canvas.addEventListener("touchmove", onTouchMove, { passive: true });
+    canvas.addEventListener("touchend", onTouchEnd);
+    canvas.addEventListener("touchcancel", onTouchEnd);
+    return () => {
+      if (timer) clearTimeout(timer);
+      canvas.removeEventListener("touchstart", onTouchStart);
+      canvas.removeEventListener("touchmove", onTouchMove);
+      canvas.removeEventListener("touchend", onTouchEnd);
+      canvas.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [onShowToolWheel, scheduleDraw]);
 
   // --- space key = temporary pan -------------------------------------------
   useEffect(() => {
