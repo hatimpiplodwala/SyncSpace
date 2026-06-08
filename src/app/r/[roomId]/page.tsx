@@ -12,7 +12,14 @@ import { ShareDialog } from "@/components/ShareDialog";
 import { AccessRequestsTray } from "@/components/AccessRequestsTray";
 import { RoomSettingsDialog } from "@/components/RoomSettingsDialog";
 import { RequestAccessButton } from "@/components/RequestAccessButton";
+import { JoinWithTokenButton } from "@/components/JoinWithTokenButton";
 import { RoomCommands } from "@/components/RoomCommands";
+
+// Suppress Referer for subresources/outbound links so a visited /r/[roomId]?t=token URL
+// doesn't leak the invite token to fonts, images, analytics, or any link the user clicks.
+export const metadata = {
+  referrer: "no-referrer" as const,
+};
 
 type RoomRow = Pick<
   Room,
@@ -49,14 +56,9 @@ export default async function RoomPage({
   // RLS hides rooms the user isn't a member of, so a null row == no access.
   const room = await fetchRoom();
 
-  // Not a member but the URL carries a token: join (validated server-side), then redirect clean.
-  if (!room && token) {
-    const { data: joined } = await supabase.rpc("join_room_with_token", {
-      p_room_id: roomId,
-      p_token: token,
-    });
-    if (joined) redirect(`/r/${roomId}`);
-  }
+  // Already a member but the URL still carries the token: strip it from the address bar
+  // and history so the token doesn't sit around in browser state.
+  if (room && token) redirect(`/r/${roomId}`);
 
   if (!room) {
     const { data: reqRow } = await supabase
@@ -77,11 +79,22 @@ export default async function RoomPage({
         <h1 className="text-xl font-bold text-foreground">
           You don&apos;t have access to this board
         </h1>
-        <p className="max-w-sm text-sm text-muted-foreground">
-          Ask the owner for an invite link, or request access and they can let
-          you in.
-        </p>
-        <RequestAccessButton roomId={roomId} initialStatus={initialStatus} />
+        {token ? (
+          <>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              You have an invite link. Join the board to start collaborating.
+            </p>
+            <JoinWithTokenButton roomId={roomId} token={token} />
+          </>
+        ) : (
+          <>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              Ask the owner for an invite link, or request access and they can
+              let you in.
+            </p>
+            <RequestAccessButton roomId={roomId} initialStatus={initialStatus} />
+          </>
+        )}
         <Button asChild variant="ghost" size="sm" className="mt-2">
           <Link href="/">Back to your boards</Link>
         </Button>

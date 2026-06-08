@@ -1,21 +1,11 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SITE_URL, isSupabaseConfigured } from "@/lib/supabase/config";
 import { userColor } from "@/lib/colors";
 
 export type FormState = { error?: string; sent?: boolean };
-
-async function originFromHeaders(): Promise<string> {
-  const h = await headers();
-  const origin = h.get("origin");
-  if (origin) return origin;
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? "https";
-  return host ? `${proto}://${host}` : SITE_URL;
-}
 
 // --- Magic-link sign in ------------------------------------------------------
 export async function sendMagicLink(
@@ -31,10 +21,12 @@ export async function sendMagicLink(
   }
 
   const supabase = await createClient();
-  const origin = await originFromHeaders();
+  // Pin to SITE_URL: never trust request headers (Origin / X-Forwarded-Host) for the
+  // emailed redirect — Supabase's allow-list is the second line of defense, but the
+  // first is just not letting the redirect target vary by request at all.
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${origin}/auth/callback` },
+    options: { emailRedirectTo: `${SITE_URL}/auth/callback` },
   });
   if (error) return { error: error.message };
   return { sent: true };

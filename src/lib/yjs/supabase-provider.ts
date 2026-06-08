@@ -33,6 +33,10 @@ export class SupabaseProvider {
   private destroyed = false;
   // Only push over the socket when joined; otherwise realtime-js falls back to REST.
   private connected = false;
+  // True if a local update was made while disconnected — we must broadcast our state on
+  // reconnect so peers learn about offline edits (the SV-exchange only covers the peer→us
+  // direction). False in steady state means we can skip the expensive full-state push.
+  private unbroadcastSinceConnect = false;
 
   constructor(
     supabase: SupabaseClient,
@@ -47,7 +51,10 @@ export class SupabaseProvider {
     this.flusher = createUpdateFlusher(supabase, roomId);
     this.broadcast = createBatcher(BROADCAST_INTERVAL_MS, (merged) => {
       // Persistence is handled separately; peers reconcile via the on-join sync.
-      if (!this.connected) return;
+      if (!this.connected) {
+        this.unbroadcastSinceConnect = true;
+        return;
+      }
       void this.channel.send({
         type: "broadcast",
         event: "yjs-update",
@@ -86,19 +93,25 @@ export class SupabaseProvider {
     this.channel.subscribe((status) => {
       if (this.destroyed) return;
       if (status === "SUBSCRIBED") {
+        const hadOfflineEdits = this.unbroadcastSinceConnect;
         this.connected = true;
+        this.unbroadcastSinceConnect = false;
         this.onStatus?.("connected");
-        // Two-way reconcile on every (re)subscribe: pull peers' newer state, push ours (idempotent).
+        // Pull peers' newer state via SV exchange — peers reply with just the delta.
         void this.channel.send({
           type: "broadcast",
           event: "yjs-sync-request",
           payload: { sv: bytesToBase64(Y.encodeStateVector(this.doc)) },
         });
-        void this.channel.send({
-          type: "broadcast",
-          event: "yjs-sync-step",
-          payload: { u: bytesToBase64(Y.encodeStateAsUpdate(this.doc)) },
-        });
+        // Push our state ONLY if we made local edits while disconnected; otherwise live
+        // broadcasts (yjs-update) already kept peers current and a full-state blast is waste.
+        if (hadOfflineEdits) {
+          void this.channel.send({
+            type: "broadcast",
+            event: "yjs-sync-step",
+            payload: { u: bytesToBase64(Y.encodeStateAsUpdate(this.doc)) },
+          });
+        }
       } else if (
         status === "CHANNEL_ERROR" ||
         status === "TIMED_OUT" ||
