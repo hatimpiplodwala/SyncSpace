@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { SITE_URL, isSupabaseConfigured } from "@/lib/supabase/config";
+import { isSupabaseConfigured, resolveSiteUrl } from "@/lib/supabase/config";
 import { userColor } from "@/lib/colors";
 
 export type FormState = { error?: string; sent?: boolean };
@@ -21,12 +21,14 @@ export async function sendMagicLink(
   }
 
   const supabase = await createClient();
-  // Pin to SITE_URL: never trust request headers (Origin / X-Forwarded-Host) for the
-  // emailed redirect — Supabase's allow-list is the second line of defense, but the
-  // first is just not letting the redirect target vary by request at all.
+  // Resolve at request time so Vercel preview deploys (per-branch URL) work without
+  // setting NEXT_PUBLIC_SITE_URL per deploy. Never trust request headers — Supabase's
+  // redirect allow-list is the second line of defense, but the first is bounding the
+  // redirect target to env-provided values only.
+  const siteUrl = resolveSiteUrl();
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${SITE_URL}/auth/callback` },
+    options: { emailRedirectTo: `${siteUrl}/auth/callback` },
   });
   if (error) return { error: error.message };
   return { sent: true };
