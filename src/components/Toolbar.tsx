@@ -92,7 +92,16 @@ export function Toolbar({
   onPreviewColor,
   onLongPressLabel,
 }: Props) {
-  const activeLabel = TOOLS.find((t) => t.tool === tool)?.label ?? tool;
+  // Compact names for the rail's mode strip so it doesn't widen the whole rail
+  // (the full labels like "Sticky note" forced it ~3x the button column).
+  const activeLabel =
+    ({
+      select: "Select",
+      pen: "Pen",
+      note: "Note",
+      rect: "Rect",
+      ellipse: "Ellipse",
+    } as Record<Tool, string>)[tool] ?? tool;
   return (
     <LongPressContext.Provider value={onLongPressLabel}>
     <div
@@ -106,8 +115,8 @@ export function Toolbar({
       )}
     >
       {/* Mode strip — anchors the rail so swapping tools doesn't shift the layout below. */}
-      <div className="label-mono hidden w-full whitespace-nowrap border-b border-border px-2 pb-1.5 pt-1 text-center md:block">
-        Mode — {activeLabel}
+      <div className="label-mono hidden w-full truncate border-b border-border px-1 pb-1.5 pt-1 text-center tracking-[0.08em] md:block">
+        {activeLabel}
       </div>
 
       {/* Tools */}
