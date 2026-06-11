@@ -4,6 +4,7 @@
 // renders a discoverable trigger plus the overlay dialog.
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export type Command = {
   id: string;
@@ -107,7 +108,7 @@ export function CommandPalette({
         </button>
       )}
 
-      {open && (
+      {open && createPortal(
         <div
           role="dialog"
           aria-modal="true"
@@ -172,7 +173,8 @@ export function CommandPalette({
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
