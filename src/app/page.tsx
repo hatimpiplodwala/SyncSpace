@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -10,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Hero } from "@/components/marketing/Hero";
 import { FeatureGrid } from "@/components/marketing/FeatureGrid";
 import { Footer } from "@/components/marketing/Footer";
+import { LandingNav } from "@/components/marketing/LandingNav";
 import { RoomList } from "@/components/RoomList";
 import { DashboardCommands } from "@/components/DashboardCommands";
 import type { Room } from "@/types/db";
@@ -50,13 +50,16 @@ export default async function HomePage() {
 
       <div className="mx-auto max-w-5xl px-6 py-12">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div>
+          <div className="rise" style={{ "--i": 0 } as React.CSSProperties}>
             <p className="label-mono">Workspace</p>
             <h1 className="mt-2 font-display text-3xl font-medium tracking-tight text-foreground">
               Your boards
             </h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div
+            className="rise flex items-center gap-3"
+            style={{ "--i": 1 } as React.CSSProperties}
+          >
             <DashboardCommands
               boards={rooms.map((r) => ({ id: r.id, name: r.name }))}
             />
@@ -79,7 +82,7 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="mt-8">
+        <div className="rise mt-8" style={{ "--i": 2 } as React.CSSProperties}>
           <RoomList rooms={rooms} currentUserId={user.id} />
         </div>
       </div>
@@ -90,14 +93,7 @@ export default async function HomePage() {
 function Landing() {
   return (
     <main className="flex-1">
-      <header>
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <LogoWordmark />
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/login">Sign in</Link>
-          </Button>
-        </div>
-      </header>
+      <LandingNav />
       <Hero />
       <FeatureGrid />
       <Footer />

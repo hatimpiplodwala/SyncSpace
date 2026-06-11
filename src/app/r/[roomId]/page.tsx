@@ -134,10 +134,10 @@ export default async function RoomPage({
           <Link
             href="/"
             aria-label="Back to boards"
-            className="flex shrink-0 items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
+            className="group/back flex shrink-0 items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-[var(--dur-fast)] hover:text-foreground"
           >
-            <ArrowLeft className="size-4" />
-            <span className="hidden sm:inline">Boards</span>
+            <ArrowLeft className="size-4 transition-transform duration-[var(--dur-fast)] [transition-timing-function:var(--ease-editorial)] group-hover/back:-translate-x-0.5" />
+            <span className="hover-underline hidden sm:inline">Boards</span>
           </Link>
           <span className="hidden h-5 w-px shrink-0 bg-border sm:inline-block" aria-hidden />
           <Logo size={20} className="hidden shrink-0 sm:block" />

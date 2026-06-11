@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ArrowRight } from "lucide-react";
 import { sendMagicLink, type FormState } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ export function AuthForm({ compact = false }: { compact?: boolean }) {
     return (
       <div
         role="status"
-        className="rounded-xl border border-primary/20 bg-accent px-4 py-3 text-sm text-accent-foreground"
+        className="rise rounded-xl border border-primary/20 bg-accent px-4 py-3 text-sm text-accent-foreground"
       >
         Check your inbox — we sent you a magic link to sign in.
       </div>
@@ -43,9 +44,21 @@ export function AuthForm({ compact = false }: { compact?: boolean }) {
           type="submit"
           size="lg"
           disabled={isPending}
-          className="h-11 sm:h-10"
+          className="group h-11 sm:h-10"
         >
-          {isPending ? "Sending…" : "Send magic link"}
+          {isPending ? (
+            "Sending…"
+          ) : (
+            <>
+              Send magic link
+              {/* On hover the arrow advances off the right edge while a fresh one
+                  slides in from the left — a continuous "send" motion. */}
+              <span className="relative inline-flex size-4 overflow-hidden" aria-hidden>
+                <ArrowRight className="size-4 transition-transform duration-[var(--dur-base)] [transition-timing-function:var(--ease-editorial)] group-hover:translate-x-5" />
+                <ArrowRight className="absolute inset-0 size-4 -translate-x-5 transition-transform duration-[var(--dur-base)] [transition-timing-function:var(--ease-editorial)] group-hover:translate-x-0" />
+              </span>
+            </>
+          )}
         </Button>
       </div>
       {state.error && (

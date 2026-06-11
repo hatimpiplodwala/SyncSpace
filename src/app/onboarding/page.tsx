@@ -13,13 +13,21 @@ export default async function OnboardingPage() {
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1
+          className="rise font-display text-3xl font-medium tracking-tight text-foreground"
+          style={{ "--i": 0 } as React.CSSProperties}
+        >
           What should we call you?
         </h1>
-        <p className="mb-6 mt-1 text-sm text-muted-foreground">
+        <p
+          className="rise mb-6 mt-2 text-sm text-muted-foreground"
+          style={{ "--i": 1 } as React.CSSProperties}
+        >
           This name and a color will identify you to collaborators on a board.
         </p>
-        <OnboardingForm defaultName={suggested} />
+        <div className="rise" style={{ "--i": 2 } as React.CSSProperties}>
+          <OnboardingForm defaultName={suggested} />
+        </div>
       </div>
     </main>
   );

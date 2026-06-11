@@ -17,13 +17,23 @@ export default async function LoginPage({
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm">
-        <Link href="/" className="mb-8 inline-flex">
+        <Link
+          href="/"
+          className="rise mb-8 inline-flex"
+          style={{ "--i": 0 } as React.CSSProperties}
+        >
           <LogoWordmark />
         </Link>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1
+          className="rise font-display text-3xl font-medium tracking-tight text-foreground"
+          style={{ "--i": 1 } as React.CSSProperties}
+        >
           Sign in
         </h1>
-        <p className="mb-6 mt-1 text-sm text-muted-foreground">
+        <p
+          className="rise mb-6 mt-2 text-sm text-muted-foreground"
+          style={{ "--i": 2 } as React.CSSProperties}
+        >
           Enter your email and we&apos;ll send you a magic link.
         </p>
 
@@ -36,7 +46,9 @@ export default async function LoginPage({
           </p>
         )}
 
-        <AuthForm />
+        <div className="rise" style={{ "--i": 3 } as React.CSSProperties}>
+          <AuthForm />
+        </div>
       </div>
     </main>
   );

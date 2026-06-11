@@ -44,10 +44,18 @@ export function RoomList({
         {rooms.map((room) => {
           const isOwner = room.owner_id === currentUserId;
           return (
-            <li key={room.id} className="border-b border-border">
+            <li
+              key={room.id}
+              className="group/row relative border-b border-border"
+            >
+              {/* left accent hairline that draws in on hover, matching the feature list */}
+              <span
+                aria-hidden
+                className="absolute left-0 top-0 h-full w-px origin-top scale-y-0 bg-primary transition-transform duration-[var(--dur-base)] [transition-timing-function:var(--ease-editorial)] group-hover/row:scale-y-100"
+              />
               <Link
                 href={`/r/${room.id}`}
-                className="group grid grid-cols-[1fr_auto_auto] items-center gap-6 px-3 py-4 transition-colors hover:bg-foreground/[0.02] sm:grid-cols-[1fr_8rem_5rem_1rem]"
+                className="grid grid-cols-[1fr_auto_auto] items-center gap-6 px-3 py-4 transition-colors duration-[var(--dur-fast)] hover:bg-secondary/50 sm:grid-cols-[1fr_8rem_5rem_1rem]"
               >
                 <h3 className="truncate font-display text-lg font-medium text-foreground">
                   {room.name}
@@ -55,12 +63,12 @@ export function RoomList({
                 <span className="label-mono hidden whitespace-nowrap sm:block">
                   {formatDate(room.created_at)}
                 </span>
-                <span className="label-mono whitespace-nowrap">
+                <span className="label-mono whitespace-nowrap transition-colors duration-[var(--dur-fast)] group-hover/row:text-foreground">
                   {isOwner ? "Owner" : "Member"}
                 </span>
                 <span
                   aria-hidden
-                  className="hidden font-mono text-sm text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground sm:inline"
+                  className="hidden font-mono text-sm text-muted-foreground transition-transform duration-[var(--dur-fast)] [transition-timing-function:var(--ease-editorial)] group-hover/row:translate-x-0.5 group-hover/row:text-primary sm:inline"
                 >
                   &rarr;
                 </span>

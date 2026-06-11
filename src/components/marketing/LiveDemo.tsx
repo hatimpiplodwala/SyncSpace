@@ -1,5 +1,9 @@
-// Editorial figure: a calm, composed snapshot of a shared canvas. Mostly static —
-// only a quiet "live" indicator pulses and the cursors drift slowly.
+"use client";
+
+// Editorial figure of a shared canvas that stays quietly alive: two cursors drift
+// as if working, and the accent stroke draws itself, holds, and redraws on a calm
+// ~12s loop. Always running (no scroll trigger) so it never reads as a flat image.
+// Reduced-motion collapses it to the composed still.
 
 export function LiveDemo() {
   return (
@@ -8,13 +12,24 @@ export function LiveDemo() {
       <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between border-b border-border bg-card px-4 py-2">
         <span className="label-mono">shared-canvas.board</span>
         <span className="flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-primary [animation:pulseLive_2.4s_ease-in-out_infinite]" />
+          <span className="ld-live size-1.5 rounded-full bg-primary" />
           <span className="label-mono">3 online</span>
         </span>
       </div>
 
       {/* canvas surface */}
-      <div className="grid-paper absolute inset-0 top-9">
+      <div className="absolute inset-0 top-9">
+        {/* grid texture, softly faded at the edges so it reads as an infinite canvas */}
+        <div
+          className="grid-paper absolute inset-0"
+          style={{
+            WebkitMaskImage:
+              "radial-gradient(120% 120% at 50% 45%, #000 55%, transparent 100%)",
+            maskImage:
+              "radial-gradient(120% 120% at 50% 45%, #000 55%, transparent 100%)",
+          }}
+        />
+
         {/* ink shapes */}
         <div className="absolute left-[12%] top-[22%] h-[28%] w-[22%] border border-foreground/45" />
         <div className="absolute right-[14%] top-[16%] aspect-square w-[15%] rounded-full border border-foreground/45" />
@@ -28,7 +43,7 @@ export function LiveDemo() {
           <div className="mt-1.5 h-1.5 w-1/2 bg-foreground/15" />
         </div>
 
-        {/* the single accent stroke */}
+        {/* the accent stroke — draws itself on a loop, as if Ada keeps sketching it */}
         <svg
           className="absolute inset-0 h-full w-full"
           viewBox="0 0 100 56"
@@ -36,30 +51,62 @@ export function LiveDemo() {
           aria-hidden="true"
         >
           <path
+            className="ld-stroke"
             d="M58 40 Q66 26 74 33 T90 24"
             fill="none"
             stroke="var(--primary)"
             strokeWidth={1.4}
             strokeLinecap="round"
+            pathLength={1}
           />
         </svg>
 
-        {/* labeled cursors */}
-        <Cursor className="left-[26%] top-[34%] [animation:driftA_11s_ease-in-out_infinite]" name="Ada" />
-        <Cursor className="left-[68%] top-[58%] [animation:driftB_13s_ease-in-out_infinite]" name="Lin" />
+        {/* labeled cursors — continuous drift, Ada sweeps the stroke as it draws */}
+        <Cursor className="ld-cursor-a left-[26%] top-[34%]" name="Ada" />
+        <Cursor className="ld-cursor-b left-[68%] top-[58%]" name="Lin" />
       </div>
 
       <style>{`
-        @keyframes pulseLive { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-        @keyframes driftA {
-          0%,100% { transform: translate(0,0); } 50% { transform: translate(10px,-7px); }
+        .ld-live { animation: ld-pulse 2.4s ease-in-out infinite; }
+
+        .ld-stroke {
+          stroke-dasharray: 1;
+          animation: ld-draw 12s var(--ease-editorial) infinite;
         }
-        @keyframes driftB {
-          0%,100% { transform: translate(0,0); } 50% { transform: translate(-9px,6px); }
+        @keyframes ld-draw {
+          0%   { stroke-dashoffset: 1; opacity: 0; }
+          4%   { stroke-dashoffset: 1; opacity: 1; }
+          22%  { stroke-dashoffset: 0; opacity: 1; }
+          88%  { stroke-dashoffset: 0; opacity: 1; }
+          98%  { stroke-dashoffset: 0; opacity: 0; }
+          100% { stroke-dashoffset: 1; opacity: 0; }
         }
+
+        .ld-cursor-a { animation: ld-work-a 12s ease-in-out infinite; }
+        .ld-cursor-b { animation: ld-work-b 14s ease-in-out infinite; }
+        @keyframes ld-work-a {
+          0%   { transform: translate(0, 0); }
+          18%  { transform: translate(150px, 58px); }
+          30%  { transform: translate(214px, 30px); }
+          55%  { transform: translate(232px, 44px); }
+          78%  { transform: translate(96px, 78px); }
+          100% { transform: translate(0, 0); }
+        }
+        @keyframes ld-work-b {
+          0%   { transform: translate(0, 0); }
+          26%  { transform: translate(-64px, -86px); }
+          52%  { transform: translate(-30px, 24px); }
+          74%  { transform: translate(48px, 40px); }
+          100% { transform: translate(0, 0); }
+        }
+
+        @keyframes ld-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
         @media (prefers-reduced-motion: reduce) {
-          .grid-paper [class*="animation"],
-          .size-1\\.5[class*="animation"] { animation: none !important; }
+          .ld-live, .ld-stroke, .ld-cursor-a, .ld-cursor-b {
+            animation: none !important;
+          }
+          .ld-stroke { stroke-dashoffset: 0; opacity: 1; }
         }
       `}</style>
     </div>
@@ -68,7 +115,7 @@ export function LiveDemo() {
 
 function Cursor({ className, name }: { className?: string; name: string }) {
   return (
-    <div className={`pointer-events-none absolute ${className ?? ""}`}>
+    <div className={`pointer-events-none absolute z-10 ${className ?? ""}`}>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
         <path
           d="M4 2l6 16 2.5-6.5L19 9 4 2z"

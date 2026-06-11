@@ -15,42 +15,58 @@ export function Hero() {
         <div className="grid gap-12 pt-20 pb-16 lg:grid-cols-[1.6fr_1fr] lg:gap-16">
           {/* Headline column */}
           <div>
-            <p className="label-mono">
+            <p className="rise label-mono" style={{ "--i": 0 } as React.CSSProperties}>
               Real-time / CRDT-synced / Offline-capable
             </p>
-            <h1 className="mt-6 font-display text-5xl font-medium leading-[0.98] tracking-tight text-foreground sm:text-6xl">
+            <h1
+              className="rise mt-6 font-display text-5xl font-medium leading-[0.98] tracking-tight text-foreground sm:text-6xl"
+              style={{ "--i": 1 } as React.CSSProperties}
+            >
               Whiteboard together,
               <br />
               <em className="font-normal italic text-primary">in real time.</em>
             </h1>
-            <p className="mt-7 max-w-md text-lg leading-relaxed text-muted-foreground">
+            <p
+              className="rise mt-7 max-w-md text-lg leading-relaxed text-muted-foreground"
+              style={{ "--i": 2 } as React.CSSProperties}
+            >
               A multiplayer canvas where every stroke, sticky note, and shape
               merges instantly across the room — and keeps working after you go
               offline.
             </p>
-            <div className="mt-9 max-w-md">
+            <div className="rise mt-9 max-w-md" style={{ "--i": 3 } as React.CSSProperties}>
               <AuthForm />
             </div>
           </div>
 
           {/* Spec sheet */}
-          <dl className="hidden self-end border-l border-border pl-6 lg:block">
+          <dl
+            className="rise hidden self-end border-l border-border pl-6 lg:block"
+            style={{ "--i": 4 } as React.CSSProperties}
+          >
             {SPECS.map(([k, v], i) => (
               <div
                 key={k}
-                className={`flex items-baseline justify-between gap-6 py-3 ${
+                className={`group/row flex items-baseline justify-between gap-6 py-3 transition-colors duration-[var(--dur-fast)] ${
                   i > 0 ? "border-t border-border" : ""
                 }`}
               >
-                <dt className="label-mono">{k}</dt>
-                <dd className="font-mono text-sm text-foreground">{v}</dd>
+                <dt className="label-mono transition-colors duration-[var(--dur-fast)] group-hover/row:text-foreground">
+                  {k}
+                </dt>
+                <dd className="font-mono text-sm text-foreground transition-colors duration-[var(--dur-fast)] group-hover/row:text-primary">
+                  {v}
+                </dd>
               </div>
             ))}
           </dl>
         </div>
 
         {/* Figure plate */}
-        <figure className="border-t border-border pt-8 pb-20">
+        <figure
+          className="rise border-t border-border pt-8 pb-20"
+          style={{ "--i": 5 } as React.CSSProperties}
+        >
           <LiveDemo />
           <figcaption className="label-mono mt-3">
             fig.01 — a shared canvas, mid-session

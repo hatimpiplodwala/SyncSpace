@@ -10,6 +10,13 @@
 :root {
   --radius: 0.3rem;
 
+  /* Motion vocabulary — one signature curve, three speeds. Reused app-wide so
+     every transition feels like one hand made it. */
+  --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 180ms;
+  --dur-base: 320ms;
+  --dur-slow: 560ms;
+
   /* White ground, cool ink */
   --background: oklch(0.997 0.001 255);
   --foreground: oklch(0.21 0.02 260);
@@ -134,5 +141,68 @@
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Quiet entrance: a small lift + fade on the editorial curve. Stagger siblings
+     by setting `style={{ "--i": n }}` — delay scales 60ms per step. */
+  .rise {
+    opacity: 0;
+    animation: editorial-rise var(--dur-base) var(--ease-editorial) forwards;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+  /* Same, but only plays once the element scrolls into view (see useInView).
+     Held invisible until `.is-inview` is added. */
+  .rise-in-view {
+    opacity: 0;
+  }
+  .rise-in-view.is-inview {
+    animation: editorial-rise var(--dur-base) var(--ease-editorial) forwards;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+
+  @keyframes editorial-rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Link underline that wipes in from the left on hover/focus. */
+  .hover-underline {
+    position: relative;
+  }
+  .hover-underline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    height: 1px;
+    width: 100%;
+    background-color: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur-fast) var(--ease-editorial);
+  }
+  .hover-underline:hover::after,
+  .hover-underline:focus-visible::after {
+    transform: scaleX(1);
+  }
+}
+
+/* One discipline for all of the above: respect the OS reduced-motion setting. */
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .rise-in-view,
+  .rise-in-view.is-inview {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .hover-underline::after {
+    transition: none;
   }
 }
