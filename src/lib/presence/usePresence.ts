@@ -29,8 +29,9 @@ export function usePresence(roomId: string, me: Me) {
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     const supabase = createClient();
+    // private: true gates this topic behind room membership via RLS (see 0005 migration).
     const channel = supabase.channel(`presence:${roomId}`, {
-      config: { presence: { key: conn }, broadcast: { self: false } },
+      config: { private: true, presence: { key: conn }, broadcast: { self: false } },
     });
 
     // Only push over the socket when joined; otherwise realtime-js falls back to REST.
@@ -66,7 +67,15 @@ export function usePresence(roomId: string, me: Me) {
         syncRoster();
       })
       .on("broadcast", { event: "cursor" }, ({ payload }) => {
-        if (payload && payload.conn !== conn) {
+        // Don't trust peer payloads: a non-string conn or non-finite coord would push
+        // NaN through worldToScreen and corrupt the overlay.
+        if (
+          payload &&
+          typeof payload.conn === "string" &&
+          payload.conn !== conn &&
+          Number.isFinite(payload.x) &&
+          Number.isFinite(payload.y)
+        ) {
           buffer.set(payload.conn, payload.x, payload.y);
         }
       });

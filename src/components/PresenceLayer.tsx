@@ -19,6 +19,8 @@ export function PresenceLayer({ peers, buffer, viewportRef }: Props) {
   const lastRef = useRef(0);
 
   useEffect(() => {
+    // Nothing to project when we're alone — don't burn a rAF every frame.
+    if (peers.length === 0) return;
     const loop = (now: number) => {
       const dt = lastRef.current ? now - lastRef.current : 16;
       lastRef.current = now;
@@ -41,7 +43,7 @@ export function PresenceLayer({ peers, buffer, viewportRef }: Props) {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       lastRef.current = 0;
     };
-  }, [buffer, viewportRef]);
+  }, [buffer, viewportRef, peers.length]);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">

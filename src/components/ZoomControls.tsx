@@ -20,27 +20,34 @@ export function ZoomControls({
   scale: number;
   controlsRef: React.RefObject<CanvasControls | null>;
 }) {
-  const call = (which: keyof CanvasControls) => () =>
-    controlsRef.current?.[which]();
   return (
     <div className="glass pointer-events-auto absolute bottom-9 right-4 z-20 hidden items-center rounded-[4px] p-0.5 md:flex">
-      <PillButton aria-label="Zoom out" onClick={call("zoomOut")}>
+      <PillButton
+        aria-label="Zoom out"
+        onClick={() => controlsRef.current?.zoomOut()}
+      >
         <Minus className="size-3.5" />
       </PillButton>
       <button
         type="button"
         suppressHydrationWarning
-        onClick={call("resetZoom")}
+        onClick={() => controlsRef.current?.resetZoom()}
         aria-label="Reset zoom to 100%"
         className="label-mono px-2 py-1 transition-colors hover:text-foreground"
       >
         {Math.round(scale * 100)}%
       </button>
-      <PillButton aria-label="Zoom in" onClick={call("zoomIn")}>
+      <PillButton
+        aria-label="Zoom in"
+        onClick={() => controlsRef.current?.zoomIn()}
+      >
         <Plus className="size-3.5" />
       </PillButton>
       <span className="mx-0.5 h-4 w-px bg-border" aria-hidden />
-      <PillButton aria-label="Fit to content" onClick={call("fitToContent")}>
+      <PillButton
+        aria-label="Fit to content"
+        onClick={() => controlsRef.current?.fitToContent()}
+      >
         <Maximize2 className="size-3.5" />
       </PillButton>
     </div>

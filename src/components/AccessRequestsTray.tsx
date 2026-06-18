@@ -31,18 +31,16 @@ export function AccessRequestsTray({
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  const reload = () => {
-    startTransition(async () => {
-      const next = await listAccessRequests(roomId);
-      setRows(next);
-      setCount(next.length);
-    });
+  const refresh = async () => {
+    const next = await listAccessRequests(roomId);
+    setRows(next);
+    setCount(next.length);
   };
 
   const onOpenChange = (open: boolean) => {
     if (open) {
       setError(null);
-      reload();
+      startTransition(refresh);
     }
   };
 
@@ -56,11 +54,7 @@ export function AccessRequestsTray({
       const res = await fn(roomId, userId);
       setBusyId(null);
       if (res.error) setError(res.error);
-      else {
-        const next = await listAccessRequests(roomId);
-        setRows(next);
-        setCount(next.length);
-      }
+      else await refresh();
     });
   };
 

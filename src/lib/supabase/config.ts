@@ -9,9 +9,6 @@ export const isSupabaseConfigured = Boolean(
     !SUPABASE_URL.includes("your-project-ref"),
 );
 
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
 // Server-only: resolve the canonical site URL at request time. Trust env vars only —
 // never request headers (see the deleted originFromHeaders). Order:
 //   1. NEXT_PUBLIC_SITE_URL — explicit override; what we want in prod.

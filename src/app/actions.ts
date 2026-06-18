@@ -55,7 +55,11 @@ export async function completeOnboarding(
     display_name: displayName,
     avatar_color: userColor(user.id),
   });
-  if (error) return { error: error.message };
+  if (error) {
+    // Don't leak raw DB error text; log the real cause server-side.
+    console.error("[action] completeOnboarding:", error);
+    return { error: "Couldn't save your profile. Please try again." };
+  }
 
   redirect("/");
 }
@@ -76,7 +80,11 @@ export async function createRoom(formData: FormData): Promise<void> {
   const { error } = await supabase
     .from("rooms")
     .insert({ id, owner_id: user.id, name });
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Don't leak raw DB error text; log the real cause server-side.
+    console.error("[action] createRoom:", error);
+    throw new Error("Couldn't create the board. Please try again.");
+  }
 
   redirect(`/r/${id}`);
 }

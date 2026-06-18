@@ -64,8 +64,10 @@ export class SupabaseProvider {
 
     doc.on("update", this.handleLocalUpdate);
 
+    // private: true makes Realtime enforce RLS on realtime.messages (see 0005 migration),
+    // so only room members can receive/send on this topic.
     this.channel = supabase.channel(`room:${roomId}`, {
-      config: { broadcast: { self: false } },
+      config: { private: true, broadcast: { self: false } },
     });
     this.channel
       .on("broadcast", { event: "yjs-update" }, ({ payload }) =>
