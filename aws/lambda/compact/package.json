@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Scheduled AWS Lambda that compacts SyncSpace room append logs into snapshots.",
   "dependencies": {
+    "@aws-sdk/client-ssm": "^3.0.0",
     "@supabase/supabase-js": "^2.106.2",
     "yjs": "^13.6.31"
   }

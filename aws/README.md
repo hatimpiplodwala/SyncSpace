@@ -31,6 +31,14 @@ for a single small image. Everything else is always-free.
 - `terraform/` — all infra: GitHub OIDC provider, scoped deploy role, ECR repo,
   Lambda, execution role, and the EventBridge schedule.
 
+## Secrets
+
+The Supabase service-role key is stored as an encrypted **SSM SecureString**
+(`/<project>/supabase_service_role_key`), not as a plaintext Lambda env var. The
+Lambda fetches it at cold start; reading it requires `ssm:GetParameter` +
+`kms:Decrypt`. You still paste the key into `terraform.tfvars` once — Terraform
+writes it to SSM (the value also lands in local, gitignored Terraform state).
+
 ## One-time setup
 
 Prereqs: AWS CLI logged in with admin-ish creds, Docker, Terraform ≥ 1.6.

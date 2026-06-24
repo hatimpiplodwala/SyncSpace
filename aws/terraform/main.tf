@@ -141,6 +141,39 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+# ── Service-role key in SSM (encrypted), read by the Lambda at cold start ─────
+# Keeps the secret out of the Lambda's plaintext environment: reading it now
+# needs ssm:GetParameter + kms:Decrypt, not just lambda:GetFunctionConfiguration.
+resource "aws_ssm_parameter" "service_role_key" {
+  name        = "/${var.project}/supabase_service_role_key"
+  description = "Supabase service-role key for the compaction Lambda."
+  type        = "SecureString"
+  value       = var.supabase_service_role_key
+}
+
+data "aws_kms_alias" "ssm" {
+  name = "alias/aws/ssm"
+}
+
+data "aws_iam_policy_document" "lambda_ssm" {
+  statement {
+    sid       = "ReadServiceKey"
+    actions   = ["ssm:GetParameter"]
+    resources = [aws_ssm_parameter.service_role_key.arn]
+  }
+  statement {
+    sid       = "DecryptSsmKey"
+    actions   = ["kms:Decrypt"]
+    resources = [data.aws_kms_alias.ssm.target_key_arn]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_ssm" {
+  name   = "${var.project}-ssm-read"
+  role   = aws_iam_role.lambda.id
+  policy = data.aws_iam_policy_document.lambda_ssm.json
+}
+
 # ── The Lambda + its logs ────────────────────────────────────────────────────
 resource "aws_cloudwatch_log_group" "lambda" {
   name              = "/aws/lambda/${var.project}"
@@ -157,9 +190,9 @@ resource "aws_lambda_function" "compact" {
 
   environment {
     variables = {
-      SUPABASE_URL              = var.supabase_url
-      SUPABASE_SERVICE_ROLE_KEY = var.supabase_service_role_key
-      COMPACTION_MIN_UPDATES    = tostring(var.compaction_min_updates)
+      SUPABASE_URL                    = var.supabase_url
+      SUPABASE_SERVICE_ROLE_KEY_PARAM = aws_ssm_parameter.service_role_key.name
+      COMPACTION_MIN_UPDATES          = tostring(var.compaction_min_updates)
     }
   }
 

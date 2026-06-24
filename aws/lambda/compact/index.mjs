@@ -3,31 +3,54 @@
 // the Supabase compact-room edge function + the pg_net trigger.
 
 import { createClient } from "@supabase/supabase-js";
+import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
 import * as Y from "yjs";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Name of the SSM SecureString parameter holding the service-role key. The key
+// itself is never stored in the Lambda's plaintext environment.
+const SERVICE_KEY_PARAM = process.env.SUPABASE_SERVICE_ROLE_KEY_PARAM;
 // Only fold rooms with at least this many log rows; keep in sync with the RPC default.
-const MIN_UPDATES = Number(process.env.COMPACTION_MIN_UPDATES ?? 200);
+// `|| default` also coerces a missing or non-numeric (NaN) env value back to the default.
+const MIN_UPDATES = Number(process.env.COMPACTION_MIN_UPDATES) || 200;
 // Cap on log rows pulled per room per run; a larger backlog folds across runs.
-const MAX_BATCH = Number(process.env.COMPACTION_MAX_BATCH ?? 5000);
+const MAX_BATCH = Number(process.env.COMPACTION_MAX_BATCH) || 5000;
 
-// PostgREST round-trips bytea as a hex string prefixed with "\x".
-function pgHexToBytes(hex) {
-  const clean = hex.startsWith("\\x") ? hex.slice(2) : hex;
-  const out = new Uint8Array(clean.length / 2);
-  for (let i = 0; i < out.length; i++) {
-    out[i] = parseInt(clean.slice(i * 2, i * 2 + 2), 16);
+const ssm = new SSMClient({});
+// Resolve the service-role key from SSM once, then cache the Supabase client
+// across warm invocations. A failed fetch is not cached, so the next run retries.
+let clientPromise;
+function getClient() {
+  if (!SUPABASE_URL || !SERVICE_KEY_PARAM) {
+    return Promise.reject(
+      new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY_PARAM are required"),
+    );
   }
-  return out;
+  if (!clientPromise) {
+    clientPromise = ssm
+      .send(new GetParameterCommand({ Name: SERVICE_KEY_PARAM, WithDecryption: true }))
+      .then(({ Parameter }) => {
+        const key = Parameter?.Value;
+        if (!key) throw new Error(`SSM parameter ${SERVICE_KEY_PARAM} is empty`);
+        return createClient(SUPABASE_URL, key, { auth: { persistSession: false } });
+      })
+      .catch((e) => {
+        clientPromise = undefined; // don't cache the failure
+        throw e;
+      });
+  }
+  return clientPromise;
+}
+
+// PostgREST round-trips bytea as a hex string prefixed with "\x". Buffer handles
+// the hex<->bytes conversion in native code (a Buffer is a Uint8Array, which Yjs
+// accepts directly).
+function pgHexToBytes(hex) {
+  return Buffer.from(hex.startsWith("\\x") ? hex.slice(2) : hex, "hex");
 }
 
 function bytesToPgHex(bytes) {
-  let hex = "\\x";
-  for (let i = 0; i < bytes.length; i++) {
-    hex += bytes[i].toString(16).padStart(2, "0");
-  }
-  return hex;
+  return "\\x" + Buffer.from(bytes).toString("hex");
 }
 
 // Fold one room's snapshot + append log into a fresh snapshot, then delete the
@@ -80,13 +103,7 @@ async function compactRoom(supabase, roomId) {
 }
 
 export const handler = async () => {
-  if (!SUPABASE_URL || !SERVICE_KEY) {
-    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
-  }
-
-  const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
-    auth: { persistSession: false },
-  });
+  const supabase = await getClient();
 
   const { data: rooms, error } = await supabase.rpc("rooms_pending_compaction", {
     p_min: MIN_UPDATES,

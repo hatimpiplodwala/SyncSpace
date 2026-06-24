@@ -14,6 +14,12 @@ permissions:
   id-token: write # required to request the OIDC token
   contents: read
 
+# Never let two deploys race the same function; queue instead of cancelling so an
+# in-flight image push/update completes.
+concurrency:
+  group: deploy-lambda
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -43,8 +49,10 @@ jobs:
           echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
 
       - name: Update Lambda function code
+        env:
+          FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
         run: |
           aws lambda update-function-code \
-            --function-name "${{ vars.LAMBDA_FUNCTION_NAME }}" \
+            --function-name "$FUNCTION_NAME" \
             --image-uri "$IMAGE" \
             --publish
