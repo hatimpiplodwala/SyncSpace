@@ -1,0 +1,11 @@
+{
+  "name": "syncspace-compact-lambda",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Scheduled AWS Lambda that compacts SyncSpace room append logs into snapshots.",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.106.2",
+    "yjs": "^13.6.31"
+  }
+}

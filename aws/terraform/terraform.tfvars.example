@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars (gitignored) and fill in. Do NOT commit real values.
+aws_region                = "us-east-1"
+github_repo               = "your-gh-user/real-time-board"
+github_branch             = "main"
+
+# Already have a GitHub OIDC provider in this account? Set false to reuse it.
+create_oidc_provider      = true
+
+supabase_url              = "https://your-ref.supabase.co"
+supabase_service_role_key = "paste-service-role-key-here"
+
+# Sweep cadence + fold threshold.
+schedule_expression       = "rate(1 hour)"
+compaction_min_updates    = 200

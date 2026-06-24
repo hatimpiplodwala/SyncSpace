@@ -1,0 +1,11 @@
+# Terraform state may contain the service-role key — never commit it.
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Real variable files hold secrets; keep only the example.
+*.tfvars
+!*.tfvars.example
+
+# Keep the provider lock file committed (.terraform.lock.hcl) for reproducibility.
