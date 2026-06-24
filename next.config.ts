@@ -7,6 +7,9 @@ import { fileURLToPath } from "node:url";
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  // Emit a self-contained server bundle (.next/standalone) so the Docker image
+  // can ship just the traced files + node, instead of the full node_modules.
+  output: "standalone",
   turbopack: {
     root: projectRoot,
   },

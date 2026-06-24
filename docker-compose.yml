@@ -1,0 +1,15 @@
+# Run the production image locally: `docker compose up --build`.
+# Compose substitutes ${VARS} from a sibling `.env` file — copy the three
+# NEXT_PUBLIC_* values from your Supabase project (see .env.docker.example).
+services:
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?set NEXT_PUBLIC_SUPABASE_URL in .env}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:?set NEXT_PUBLIC_SUPABASE_ANON_KEY in .env}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+    image: syncspace:local
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

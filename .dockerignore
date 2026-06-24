@@ -1,0 +1,37 @@
+# Build context hygiene: keep the image small and the build deterministic.
+# node_modules and .next are rebuilt inside the image; never copy host versions.
+node_modules
+.next
+out
+
+# VCS / CI / editor
+.git
+.gitignore
+.github
+.vscode
+.idea
+
+# Secrets — never bake env files into an image (anon vars are passed as build args)
+.env
+.env.*
+!.env.docker.example
+
+# Tests, reports, and tooling not needed to build the app
+e2e
+playwright.config.ts
+playwright-report
+test-results
+coverage
+
+# Backend infra + SQL migrations are not part of the Next build
+supabase
+aws
+
+# Docs and local agent scratch
+*.md
+.remember
+
+# Docker artifacts themselves
+Dockerfile
+docker-compose.yml
+.dockerignore
