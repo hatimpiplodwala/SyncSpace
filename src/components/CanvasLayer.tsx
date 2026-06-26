@@ -5,7 +5,6 @@ import type * as Y from "yjs";
 import type { Shape } from "@/types/shapes";
 import { shapeBounds } from "@/types/shapes";
 import { render, resizeHandleScreenRect } from "@/lib/canvas/render";
-import { timed } from "@/lib/observability/perf";
 import { hitTest } from "@/lib/canvas/hit-test";
 import {
   type Viewport,
@@ -191,16 +190,14 @@ export function CanvasLayer({
         return { ...s, color: previewColor };
       });
     }
-    timed("canvas-render", () =>
-      render(ctx, shapes, viewportRef.current, {
-        width: w,
-        height: h,
-        dpr,
-        selectedId,
-        preview: previewRef.current,
-        hideTextForId: editingId,
-      }),
-    );
+    render(ctx, shapes, viewportRef.current, {
+      width: w,
+      height: h,
+      dpr,
+      selectedId,
+      preview: previewRef.current,
+      hideTextForId: editingId,
+    });
   }, [doc, selectedId, editingId, previewColor]);
 
   // Keep the rAF callback pointing at the freshest draw closure.

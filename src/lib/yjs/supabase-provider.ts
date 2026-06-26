@@ -4,7 +4,6 @@
 import * as Y from "yjs";
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { bytesToBase64, base64ToBytes } from "./encoding";
-import { timed } from "@/lib/observability/perf";
 import { createBatcher, type Batcher } from "./batch";
 import {
   loadFromPostgres,
@@ -134,9 +133,7 @@ export class SupabaseProvider {
   private applyRemote(b64: unknown) {
     if (typeof b64 !== "string") return;
     try {
-      timed("crdt-apply", () =>
-        Y.applyUpdate(this.doc, base64ToBytes(b64), this),
-      );
+      Y.applyUpdate(this.doc, base64ToBytes(b64), this);
     } catch (e) {
       console.error("[provider] bad remote update:", e);
     }
