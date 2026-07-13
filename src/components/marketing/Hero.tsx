@@ -1,4 +1,12 @@
+"use client";
+
+// Landing hero: one orchestrated page-load sequence. Every element rises on the
+// same parent stagger — eyebrow, headline, copy, form, spec sheet — and the
+// figure plate lands last with a slightly longer settle.
+
+import { motion } from "framer-motion";
 import { AuthForm } from "@/components/AuthForm";
+import { rise, riseStagger, EASE_EDITORIAL } from "@/lib/motion";
 import { LiveDemo } from "./LiveDemo";
 
 const SPECS: [string, string][] = [
@@ -11,38 +19,43 @@ const SPECS: [string, string][] = [
 export function Hero() {
   return (
     <section className="border-t border-border">
-      <div className="mx-auto max-w-6xl px-6">
+      <motion.div
+        className="mx-auto max-w-6xl px-6"
+        variants={riseStagger}
+        initial="hidden"
+        animate="shown"
+      >
         <div className="grid gap-12 pt-20 pb-16 lg:grid-cols-[1.6fr_1fr] lg:gap-16">
           {/* Headline column */}
           <div>
-            <p className="rise label-mono" style={{ "--i": 0 } as React.CSSProperties}>
+            <motion.p variants={rise} className="label-mono">
               Real-time / CRDT-synced / Offline-capable
-            </p>
-            <h1
-              className="rise mt-6 font-display text-5xl font-medium leading-[0.98] tracking-tight text-foreground sm:text-6xl"
-              style={{ "--i": 1 } as React.CSSProperties}
+            </motion.p>
+            <motion.h1
+              variants={rise}
+              className="mt-6 font-display text-5xl font-medium leading-[0.98] tracking-tight text-foreground sm:text-6xl"
             >
               Whiteboard together,
               <br />
               <em className="font-normal italic text-primary">in real time.</em>
-            </h1>
-            <p
-              className="rise mt-7 max-w-md text-lg leading-relaxed text-muted-foreground"
-              style={{ "--i": 2 } as React.CSSProperties}
+            </motion.h1>
+            <motion.p
+              variants={rise}
+              className="mt-7 max-w-md text-lg leading-relaxed text-muted-foreground"
             >
               A multiplayer canvas where every stroke, sticky note, and shape
               merges instantly across the room — and keeps working after you go
               offline.
-            </p>
-            <div className="rise mt-9 max-w-md" style={{ "--i": 3 } as React.CSSProperties}>
+            </motion.p>
+            <motion.div variants={rise} className="mt-9 max-w-md">
               <AuthForm />
-            </div>
+            </motion.div>
           </div>
 
           {/* Spec sheet */}
-          <dl
-            className="rise hidden self-end border-l border-border pl-6 lg:block"
-            style={{ "--i": 4 } as React.CSSProperties}
+          <motion.dl
+            variants={rise}
+            className="hidden self-end border-l border-border pl-6 lg:block"
           >
             {SPECS.map(([k, v], i) => (
               <div
@@ -59,20 +72,27 @@ export function Hero() {
                 </dd>
               </div>
             ))}
-          </dl>
+          </motion.dl>
         </div>
 
-        {/* Figure plate */}
-        <figure
-          className="rise border-t border-border pt-8 pb-20"
-          style={{ "--i": 5 } as React.CSSProperties}
+        {/* Figure plate — the last beat: a longer, quieter settle. */}
+        <motion.figure
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            shown: {
+              opacity: 1,
+              y: 0,
+              transition: { duration: 0.56, ease: EASE_EDITORIAL },
+            },
+          }}
+          className="border-t border-border pt-8 pb-20"
         >
           <LiveDemo />
           <figcaption className="label-mono mt-3">
             fig.01 — a shared canvas, mid-session
           </figcaption>
-        </figure>
-      </div>
+        </motion.figure>
+      </motion.div>
     </section>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useInView } from "@/lib/useInView";
+import { motion } from "framer-motion";
+import { rise, riseStagger } from "@/lib/motion";
 
 const features = [
   {
@@ -26,8 +27,6 @@ const features = [
 ];
 
 export function FeatureGrid() {
-  const [listRef, inView] = useInView<HTMLOListElement>();
-
   return (
     <section className="border-t border-border">
       <div className="mx-auto max-w-6xl px-6 py-20">
@@ -39,14 +38,18 @@ export function FeatureGrid() {
             </h2>
           </div>
 
-          <ol ref={listRef} className="border-t border-border">
+          <motion.ol
+            className="border-t border-border"
+            variants={riseStagger}
+            initial="hidden"
+            whileInView="shown"
+            viewport={{ once: true, margin: "0px 0px -12% 0px" }}
+          >
             {features.map((f, i) => (
-              <li
+              <motion.li
                 key={f.title}
-                style={{ "--i": i } as React.CSSProperties}
-                className={`rise-in-view group/feat relative border-b border-border ${
-                  inView ? "is-inview" : ""
-                }`}
+                variants={rise}
+                className="group/feat relative border-b border-border"
               >
                 {/* left accent hairline that draws in on hover */}
                 <span
@@ -71,9 +74,9 @@ export function FeatureGrid() {
                     </p>
                   </div>
                 </div>
-              </li>
+              </motion.li>
             ))}
-          </ol>
+          </motion.ol>
         </div>
       </div>
     </section>

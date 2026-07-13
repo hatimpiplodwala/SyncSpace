@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Hanken_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { MotionConfig } from "framer-motion";
 import "./globals.css";
 
 // Serif display for headlines, grotesque for body, monospace for technical labels.
@@ -41,7 +42,8 @@ export default function RootLayout({
         className="flex min-h-full flex-col bg-background text-foreground"
         suppressHydrationWarning
       >
-        {children}
+        {/* Respect the OS reduced-motion setting for all framer-motion work. */}
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
       </body>
     </html>
   );

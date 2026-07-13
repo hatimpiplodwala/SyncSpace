@@ -150,16 +150,6 @@
     animation: editorial-rise var(--dur-base) var(--ease-editorial) forwards;
     animation-delay: calc(var(--i, 0) * 60ms);
   }
-  /* Same, but only plays once the element scrolls into view (see useInView).
-     Held invisible until `.is-inview` is added. */
-  .rise-in-view {
-    opacity: 0;
-  }
-  .rise-in-view.is-inview {
-    animation: editorial-rise var(--dur-base) var(--ease-editorial) forwards;
-    animation-delay: calc(var(--i, 0) * 60ms);
-  }
-
   @keyframes editorial-rise {
     from {
       opacity: 0;
@@ -195,9 +185,7 @@
 
 /* One discipline for all of the above: respect the OS reduced-motion setting. */
 @media (prefers-reduced-motion: reduce) {
-  .rise,
-  .rise-in-view,
-  .rise-in-view.is-inview {
+  .rise {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
